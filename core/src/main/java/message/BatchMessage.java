@@ -6,10 +6,12 @@ import com.google.common.base.Preconditions;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
-import java.util.List;
-
 /**
- * Since the statistics service isn't
+ * Essentially a wrapper class around {@link PropertyMessage}s. Enables us to collect all information for properties from the
+ * Database, create a single {@link PropertyMessage} for each of them and then batch them together for sending.
+ *
+ * This is necessary since we cannot process {@link PropertyMessage}s individually because we need to know how many datapoints
+ * are to be processed so we know when to publish results.
  */
 @Getter @EqualsAndHashCode
 public class BatchMessage implements Message<PropertyMessage[]> {

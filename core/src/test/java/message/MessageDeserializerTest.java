@@ -1,6 +1,5 @@
 package message;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
@@ -9,8 +8,6 @@ import utils.TestUtils;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;

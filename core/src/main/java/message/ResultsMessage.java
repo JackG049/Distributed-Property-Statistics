@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import model.StatisticsResult;
 
+/**
+ * Message implementation which stores the result from the Statistics service
+ */
 @Getter
 public class ResultsMessage implements Message<StatisticsResult> {
     private final StatisticsResult data;

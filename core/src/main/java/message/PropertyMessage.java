@@ -7,6 +7,9 @@ import lombok.Getter;
 
 import java.util.Map;
 
+/**
+ * {@link Message} implementation responsible for storing data relating to a property
+ */
 @Getter @EqualsAndHashCode
 public class PropertyMessage implements Message<Map<String, Object>>{
     private final long timestamp;
