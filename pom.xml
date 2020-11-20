@@ -13,6 +13,7 @@
         <module>balancer</module>
         <module>statistics</module>
         <module>broker</module>
+        <module>puller</module>
     </modules>
 
     <properties>
