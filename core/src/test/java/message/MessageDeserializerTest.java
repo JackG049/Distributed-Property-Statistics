@@ -2,6 +2,7 @@ package message;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import model.Query;
 import org.junit.Before;
 import org.junit.Test;
 import utils.TestUtils;
@@ -40,7 +41,7 @@ public class MessageDeserializerTest {
         for (int i = 0; i < 100; i++) {
             messages[i] = new PropertyMessage(Instant.now().toEpochMilli() + i, ImmutableMap.of("testID", i));
         }
-        final Message<PropertyMessage[]> batchMessage = new BatchMessage(1L, Instant.EPOCH.toEpochMilli(), messages);
+        final Message<PropertyMessage[]> batchMessage = new BatchMessage(1L, Instant.EPOCH.toEpochMilli(),TestUtils.emptyQuery(), messages);
         final byte[] data = objectMapper.writeValueAsBytes(batchMessage);
         final Message<?> deserializedMessage = deserializer.deserialize(data);
         assertNotNull(deserializedMessage);

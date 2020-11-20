@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import message.BatchMessage;
 import message.PropertyMessage;
+import model.Query;
 
 public class TestUtils {
 
@@ -22,6 +23,10 @@ public class TestUtils {
                 new NamedType(BatchMessage.class, "batch"),
                 new NamedType(PropertyMessage.class, "property")
         };
+    }
+
+    public static Query emptyQuery() {
+        return new Query(null, null, null, null, null);
     }
 
 }
