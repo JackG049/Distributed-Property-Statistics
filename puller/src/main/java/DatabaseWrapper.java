@@ -18,13 +18,21 @@ import org.apache.commons.lang3.StringUtils;
 public class DatabaseWrapper {
     // Maps a database name e.g 'daft_ie' to a db connection
     private final Map<String, Connection> connectionMap = new HashMap();
+    private String databaseIp;
+    private int databasePortNum;
+
+    // todo add param checking
+    public DatabaseWrapper(String databaseIp, int databasePortNum){
+        this.databaseIp = databaseIp;
+        this.databasePortNum = databasePortNum;
+    }
 
     public void addConnection(String databaseName) throws SQLException {
         if (StringUtils.isEmpty(databaseName)) {
             throw new IllegalArgumentException("Database name cannot be empty");
         }
 
-        String databaseUrl = "jdbc:mysql://127.0.0.1/" + databaseName;
+        String databaseUrl = String.format("jdbc:mysql://%s:%s/%s", databaseIp, databasePortNum, databaseName);
         Connection connection = DriverManager.getConnection(databaseUrl, "root", "password");
         connectionMap.put(databaseName, connection);
     }
@@ -53,7 +61,7 @@ public class DatabaseWrapper {
 
     }
 
-    public List<Map<String, Object>> queryDatabase(String databaseName, String sqlQuery) throws SQLException {
+    public List<Map<String, Object>> queryDatabase(String sqlQuery, String databaseName) throws SQLException {
         if (StringUtils.isEmpty(databaseName)) {
             throw new IllegalArgumentException("Database name cannot be empty");
         }

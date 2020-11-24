@@ -1,11 +1,8 @@
 import com.google.common.base.Joiner;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +10,7 @@ import java.util.Map;
 import static org.junit.Assume.assumeTrue;
 
 public class DatabaseWrapperTest {
-    private final static DatabaseWrapper databaseWrapper = new DatabaseWrapper();
+    private final static DatabaseWrapper databaseWrapper = new DatabaseWrapper("localhost", 3307);
     private final static String databaseName = "daft_ie";
     private static boolean isDatabaseRunning = false;
 
@@ -34,7 +31,7 @@ public class DatabaseWrapperTest {
         String query = "SELECT * FROM historic_data";
 
         databaseWrapper.addConnection(databaseName);
-        List<Map<String, Object>> results = databaseWrapper.queryDatabase(databaseName, query);
+        List<Map<String, Object>> results = databaseWrapper.queryDatabase(query, databaseName);
 
         if (!results.isEmpty()) {
             System.out.println("First entry: " + Joiner.on(",").withKeyValueSeparator("=").join(results.get(0)));
