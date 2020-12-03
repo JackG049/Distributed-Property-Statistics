@@ -1,23 +1,32 @@
 package message;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 import model.StatisticsResult;
+
+import java.util.UUID;
 
 /**
  * Message implementation which stores the result from the Statistics service
  */
 @Getter
-public class ResultsMessage implements Message<StatisticsResult> {
-    private final StatisticsResult data;
+public class ResultsMessage implements Message<StatisticsResult[]> {
+    private final UUID uuid;
+    private final int partitionID;
+    private final StatisticsResult[] data;
     private final long timestamp;
-    private final long id;
 
-    public ResultsMessage(@JsonProperty("result") final StatisticsResult data,
+    @JsonCreator
+    public ResultsMessage(@JsonProperty("id") final UUID uuid,
+                          @JsonProperty("partitionID") final int partitionID,
                           @JsonProperty("timestamp") final long timestamp,
-                          @JsonProperty("id") final long id) {
-        this.data = data;
+                          @JsonProperty("result") final StatisticsResult[] data) {
+        this.uuid = Preconditions.checkNotNull(uuid, "uuid must not be null");
+        Preconditions.checkArgument(partitionID >= 0, "partitionID must be non-negative");
+        this.partitionID = partitionID;
         this.timestamp = timestamp;
-        this.id = id;
+        this.data = Preconditions.checkNotNull(data, "data must not be null");
     }
 }

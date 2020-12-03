@@ -29,7 +29,7 @@ public class Partitioner {
     }
 
     public Partition partition(final PropertyMessage message) {
-        return new Partition(StringSubstitutor.replace(template, message.getData(), "{", "}"));
+        return new Partition(StringSubstitutor.replace(template, message.getData().asMap(), "{", "}"));
     }
 
     public Partition partition(final Map<String, ?> data) {

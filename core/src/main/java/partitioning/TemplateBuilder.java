@@ -2,27 +2,27 @@ package partitioning;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public final class TemplateBuilder {
     private final Map<String, Boolean> templateMap = new LinkedHashMap<>();
 
     public String build() throws IllegalArgumentException {
-        final StringBuilder builder = new StringBuilder();
-        if (templateMap.values().stream().noneMatch(v -> v)) {
+        boolean allFalse = true;
+        for (final boolean b : templateMap.values()) {
+            if (b) {
+                allFalse = false;
+                break;
+            }
+        }
+        if (allFalse) {
             throw new IllegalArgumentException("failed to provide any values to build template");
         }
-        int counter = 0;
-        int mapSize = templateMap.size();
-        for (final Map.Entry<String, Boolean> entry : templateMap.entrySet()) {
-            if (entry.getValue()) {
-                builder.append("{").append(entry.getKey()).append("}");
-                if (counter != mapSize - 1) {
-                    builder.append("_");
-                }
-            }
-            counter++;
-        }
-        return builder.toString();
+
+        return templateMap.entrySet().stream().filter(Map.Entry::getValue)
+                .map(Map.Entry::getKey)
+                .map(s -> "{" + s + "}")
+                .collect(Collectors.joining("_"));
     }
 
     public TemplateBuilder withCounty(final boolean value) {

@@ -15,9 +15,9 @@ public class MessageDeserializer {
         this.objectMapper = objectMapper;
     }
 
-    public <S> Message<S> deserialize(final byte[] data){
+    public <S> Message<S> deserialize(final String dataAsString){
         try {
-            return objectMapper.readValue(data, Message.class);
+            return objectMapper.readValue(dataAsString, Message.class);
         } catch (IOException e) {
             e.printStackTrace();
         }
