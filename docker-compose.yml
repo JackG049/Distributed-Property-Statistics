@@ -1,0 +1,29 @@
+version: "3"
+services:
+  zookeeper:
+    image: 'wurstmeister/zookeeper'
+    ports:
+      - '2181:2181'
+    networks:
+      - kafka_network
+  kafka:
+    image: 'wurstmeister/kafka'
+    container_name: kafka
+    ports:
+      - '9092:9092'
+      - "9093:9093"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_LISTENERS: INTERNAL://:9093,EXTERNAL://:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9093,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "results:${CLIENT_PARTITIONS}:${REPLICATION_FACTOR},requests_daft:${NUM_PARTITIONS}:${REPLICATION_FACTOR}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - kafka_network
+networks:
+  kafka_network:
+    driver: bridge

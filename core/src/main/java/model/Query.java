@@ -2,14 +2,15 @@ package model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @Getter
+@EqualsAndHashCode
 public class Query {
     private final String county;
     private final String propertyType;
     private final String postcodePrefix;
-
     // Using the wrapper version so they can be set to null
     private final Double minPrice;
     private final Double maxPrice;

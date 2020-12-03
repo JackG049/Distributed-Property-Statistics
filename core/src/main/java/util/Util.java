@@ -1,4 +1,4 @@
-package utils;
+package util;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,12 +8,8 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import message.BatchMessage;
 import message.PropertyMessage;
-import model.Query;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 
-import java.time.LocalDate;
-
-public class TestUtils {
+public class Util {
 
     public static final ObjectMapper objectMapper;
 
@@ -34,8 +30,5 @@ public class TestUtils {
         };
     }
 
-    public static Query emptyQuery() {
-        return new Query(null, null, null,null, null);
-    }
 
 }

@@ -15,9 +15,9 @@ public class MessageSerializer {
         this.objectMapper = objectMapper;
     }
 
-    public byte[] serialize(final Message<?> message){
+    public String serialize(final Message<?> message){
         try {
-            return objectMapper.writeValueAsBytes(message);
+            return objectMapper.writeValueAsString(message);
         } catch (IOException e) {
             e.printStackTrace();
         }

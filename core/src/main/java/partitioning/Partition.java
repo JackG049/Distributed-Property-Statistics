@@ -3,12 +3,15 @@ package partitioning;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 
-@Getter
+@Getter @EqualsAndHashCode
 public final class Partition implements Serializable {
     private final String value;
 
@@ -17,12 +20,12 @@ public final class Partition implements Serializable {
         this.value = Preconditions.checkNotNull(value, "value must not be null");
     }
 
+    public static Partition join(final Partition ...partitions) {
+        return new Partition(Arrays.stream(partitions).map(Partition::toString).collect(Collectors.joining("_")));
+    }
+
     @Override
-    public boolean equals(final Object obj) {
-        if (!(obj instanceof Partition)) {
-            return false;
-        }
-        final Partition other = (Partition) obj;
-        return this.value.equals(other.value);
+    public String toString() {
+        return value;
     }
 }
