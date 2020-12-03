@@ -1,0 +1,17 @@
+version: '3'
+services:
+  daft_statistics:
+    image: statistics:latest
+    environment:
+      CONSUMER_TOPIC: "requests_daft"
+    networks:
+       - distributed-property-statistics_kafka_network
+  myhome_statistics:
+    image: statistics:latest
+    environment:
+      CONSUMER_TOPIC: "requests_myhome"
+    networks:
+      - distributed-property-statistics_kafka_network
+networks:
+  distributed-property-statistics_kafka_network:
+    external: true
