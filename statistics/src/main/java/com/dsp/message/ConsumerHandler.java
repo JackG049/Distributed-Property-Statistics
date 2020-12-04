@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.UUID;
@@ -38,7 +39,7 @@ public class ConsumerHandler extends KafkaHandler {
         this.consumer = new KafkaConsumer<>(consumerProperties);
         this.consumer.subscribe(Collections.singletonList(consumerTopic));
         this.deserializer = deserializer;
-        LOGGER.debug(consumer.partitionsFor("requests_daft").toString());
+        LOGGER.debug(consumer.partitionsFor(consumerTopic).toString());
     }
 
     @Override
@@ -64,7 +65,7 @@ public class ConsumerHandler extends KafkaHandler {
                     }, workers);
                 }
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(500);
                 } catch (final InterruptedException ex) {
                     LOGGER.warn(ex.getMessage());
                 }
