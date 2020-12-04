@@ -16,20 +16,9 @@ import java.util.stream.Collectors;
 
 
 public class StatisticsCalculator {
-    // Will probably change to a BiFunction so as to include property key to look up, e.g. get statistics for area etc
-    static volatile Map<String, Function<List<PropertyMessage>, Double>> statisticsFunctions = new HashMap<>();
-
-    static {
-        statisticsFunctions.put("mean", propertyMessages -> propertyMessages.stream().mapToDouble(PropertyMessage::getPropertyPrice).reduce(0.0, Double::sum) / propertyMessages.size());
-        statisticsFunctions.put("median", propertyMessages -> propertyMessages.stream()
-                .sorted(Comparator.comparingDouble(PropertyMessage::getPropertyPrice))
-                .collect(Collectors.toList()).get(propertyMessages.size() / 2).getPropertyPrice());
-        statisticsFunctions.put("variance", propertyMessages -> {
-            double mean = statisticsFunctions.get("mean").apply(propertyMessages);
-            return propertyMessages.stream().mapToDouble(PropertyMessage::getPropertyPrice).map(price -> Math.pow(price - mean, 2)).reduce(0.0, Double::sum) / propertyMessages.size();
-        });
-        statisticsFunctions.put("stddev", propertyMessages ->  Math.sqrt(statisticsFunctions.get("variance").apply(propertyMessages)));
-    }
+    public static final Function<List<PropertyMessage>, Double> median = (messages) -> messages.stream()
+            .sorted(Comparator.comparingDouble(PropertyMessage::getPropertyPrice))
+            .collect(Collectors.toList()).get(messages.size() / 2).getPropertyPrice();
 
     private final Partitioner datePartitioner = new Partitioner("{year}_{month}");
 
@@ -50,11 +39,44 @@ public class StatisticsCalculator {
         final Map<Partition, Map<String, Double>> results = new HashMap<>();
         for (final Map.Entry<Partition, List<PropertyMessage>> entry : bucketedMessages.entrySet()) {
             final Map<String, Double> statisticsResults = new HashMap<>();
-            for (final Map.Entry<String, Function<List<PropertyMessage>, Double>> functionEntry : statisticsFunctions.entrySet()) {
-                statisticsResults.put(functionEntry.getKey(), functionEntry.getValue().apply(entry.getValue()));
+            final OnlineStatistics onlineStatistics = new OnlineStatistics();
+            for (final PropertyMessage message : entry.getValue()) {
+                onlineStatistics.update(message.getPropertyPrice());
             }
+            statisticsResults.put("mean", onlineStatistics.mean());
+            statisticsResults.put("median", median.apply(entry.getValue()));
+            statisticsResults.put("variance", onlineStatistics.variance());
+            statisticsResults.put("stddev", onlineStatistics.stddev());
+
             results.put(Partition.join(global, new Partition(entry.getKey().getValue())), statisticsResults);
         }
         return new StatisticsResult(results);
     }
+
+    // Online method of doing statistics, should be faster since rather than doing 3 iterations for each, mean, variance and stddev we do just 1
+    static class OnlineStatistics {
+        private int n;
+        private double sum;
+        private double mean;
+
+        public void update(final double x) {
+            ++n;
+            double delta = mean + (x - mean) / n;
+            sum += (x - mean) * (x - delta);
+            mean = delta;
+        }
+
+        public double variance() {
+            return n > 0 ? sum / n : 0.0;
+        }
+
+        public double stddev() {
+            return n > 0 ? Math.sqrt(variance()) : 0.0;
+        }
+
+        public double mean() {
+            return mean;
+        }
+    }
+
 }

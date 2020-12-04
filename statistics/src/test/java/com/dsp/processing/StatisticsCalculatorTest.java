@@ -15,7 +15,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 
@@ -29,58 +28,57 @@ public class StatisticsCalculatorTest {
 
     @Test
     public void testMean() {
-        final Function<List<PropertyMessage>, Double> mean = StatisticsCalculator.statisticsFunctions.get("mean");
         final List<PropertyMessage> messages = ImmutableList.of(
                 new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 100, "M", ImmutableMap.of())),
                 new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 150, "M", ImmutableMap.of())),
                 new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 125, "M", ImmutableMap.of()))
         );
-        assertEquals(125.0, mean.apply(messages), 0.01);
+
+        final StatisticsCalculator.OnlineStatistics onlineStatistics = new StatisticsCalculator.OnlineStatistics();
+        for (final PropertyMessage message : messages) {
+            onlineStatistics.update(message.getPropertyPrice());
+        }
+        assertEquals(125.0, onlineStatistics.mean(), 0.001);
     }
 
     @Test
     public void testMedian() {
-        final Function<List<PropertyMessage>, Double> median = StatisticsCalculator.statisticsFunctions.get("median");
         final List<PropertyMessage> messages = ImmutableList.of(
                 new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 100, "M", ImmutableMap.of())),
                 new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 150, "M", ImmutableMap.of())),
                 new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 75, "M", ImmutableMap.of()))
         );
-        assertEquals(100.0, median.apply(messages), 0.01);
+        assertEquals(100.0, StatisticsCalculator.median.apply(messages), 0.01);
     }
 
     @Test
     public void testVariance() {
-        final Function<List<PropertyMessage>, Double> variance = StatisticsCalculator.statisticsFunctions.get("variance");
         final List<PropertyMessage> messages = ImmutableList.of(
                 new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 100, "M", ImmutableMap.of())),
                 new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 150, "M", ImmutableMap.of())),
                 new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 125, "M", ImmutableMap.of()))
         );
-        assertEquals(416.6667, variance.apply(messages), 0.0001);
-    }
 
-    @Test
-    public void test() {
-        final Function<List<PropertyMessage>, Double> variance = StatisticsCalculator.statisticsFunctions.get("variance");
-        final List<PropertyMessage> messages = ImmutableList.of(
-                new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 100000, "M", ImmutableMap.of())),
-                new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 175000, "M", ImmutableMap.of())),
-                new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 237000, "M", ImmutableMap.of()))
-        );
-        System.out.println(variance.apply(messages));
-        assertEquals(3137555555.5556, variance.apply(messages), 0.001);
+        final StatisticsCalculator.OnlineStatistics onlineStatistics = new StatisticsCalculator.OnlineStatistics();
+        for (final PropertyMessage message : messages) {
+            onlineStatistics.update(message.getPropertyPrice());
+        }
+        assertEquals(416.6667, onlineStatistics.variance(), 0.001);
     }
 
     @Test
     public void testStddev() {
-        final Function<List<PropertyMessage>, Double> stddev = StatisticsCalculator.statisticsFunctions.get("stddev");
         final List<PropertyMessage> messages = ImmutableList.of(
                 new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 100, "M", ImmutableMap.of())),
                 new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 150, "M", ImmutableMap.of())),
                 new PropertyMessage(1, LocalDate.now(), new PropertyData("Mayo", "house", 125, "M", ImmutableMap.of()))
         );
-        assertEquals(Math.sqrt(416.6667), stddev.apply(messages), 0.0001);
+
+        final StatisticsCalculator.OnlineStatistics onlineStatistics = new StatisticsCalculator.OnlineStatistics();
+        for (final PropertyMessage message : messages) {
+            onlineStatistics.update(message.getPropertyPrice());
+        }
+        assertEquals(Math.sqrt(416.6667), onlineStatistics.stddev(), 0.001);
     }
 
     private static List<PropertyMessage> loadDataFromFile(final String fileName) throws IOException {
