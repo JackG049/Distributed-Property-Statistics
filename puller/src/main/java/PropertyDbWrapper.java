@@ -38,63 +38,13 @@ public class PropertyDbWrapper {
     }
 
 
-
-    public void createPropertyTable(String tableName) throws InterruptedException {
-        System.out.println("Attempting to create table; please wait...");
-
-        // Attribute definitions
-        ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<AttributeDefinition>();
-
-        attributeDefinitions.add(new AttributeDefinition().withAttributeName("ListingId").withAttributeType(ScalarAttributeType.S));
-        attributeDefinitions.add(new AttributeDefinition().withAttributeName("ListingDate").withAttributeType(ScalarAttributeType.S));
-        //attributeDefinitions.add(new AttributeDefinition().withAttributeName("Price").withAttributeType(ScalarAttributeType.N));
-        attributeDefinitions.add(new AttributeDefinition().withAttributeName("County").withAttributeType(ScalarAttributeType.S));
-
-        // Key schema for table
-        ArrayList<KeySchemaElement> tableKeySchema = new ArrayList<KeySchemaElement>();
-        tableKeySchema.add(new KeySchemaElement().withAttributeName("ListingId").withKeyType(KeyType.HASH)); // Partition
-        tableKeySchema.add(new KeySchemaElement().withAttributeName("ListingDate").withKeyType(KeyType.RANGE));
-
-        // Initial provisioned throughput settings for the indexes
-        ProvisionedThroughput ptIndex = new ProvisionedThroughput().withReadCapacityUnits(1L)
-            .withWriteCapacityUnits(1L);
-
-        // CreateDateIndex
-        GlobalSecondaryIndex listingDateIndex = new GlobalSecondaryIndex().withIndexName("ListingDateIndex")
-            .withProvisionedThroughput(ptIndex)
-            .withKeySchema(new KeySchemaElement().withAttributeName("County").withKeyType(KeyType.HASH), // Partition
-             new KeySchemaElement().withAttributeName("ListingDate").withKeyType(KeyType.RANGE)) // Sort
-            .withProjection(new Projection().withProjectionType("ALL"));
-
-        CreateTableRequest createTableRequest = new CreateTableRequest().withTableName(tableName)
-                .withProvisionedThroughput(
-                    new ProvisionedThroughput().withReadCapacityUnits((long) 1).withWriteCapacityUnits((long) 1))
-                .withAttributeDefinitions(attributeDefinitions).withKeySchema(tableKeySchema)
-                .withGlobalSecondaryIndexes(listingDateIndex);
-
-
-        System.out.println("Creating table " + tableName + "...");
-        dynamoDB.createTable(createTableRequest);
-
-        // Wait for table to become active
-        System.out.println("Waiting for " + tableName + " to become ACTIVE...");
-        try {
-            Table table = dynamoDB.getTable(tableName);
-            table.waitForActive();
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-    }
-
     public Set<String> getTableNames() {
         TableCollection<ListTablesResult> tables = dynamoDB.listTables();
         Set<Table> tableSet = Sets.newHashSet(tables.iterator());
         return tableSet.stream().map(Table::getTableName).collect(Collectors.toSet());
     }
 
-    public void getLastWriteData(String tableName) {
+    public void getLastWriteDate(String tableName) {
 
     }
 
@@ -160,6 +110,34 @@ public class PropertyDbWrapper {
 
     }
 
+    public void deleteTable(String tableName) {
+        System.out.println("Deleting table " + tableName + "...");
+        Table table = dynamoDB.getTable(tableName);
+        table.delete();
+
+        // Wait for table to be deleted
+        System.out.println("Waiting for " + tableName + " to be deleted...");
+        try {
+            table.waitForDelete();
+        }
+        catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Item buildPropertyItem(String listingId, String listingDate, Map<String, Object> additionalData) {
+        Item item = new Item().withPrimaryKey("ListingId", listingId, "ListingDate", listingDate);
+        for (Map.Entry<String, Object> entry : additionalData.entrySet()) {
+            if (entry.getValue() instanceof String) {
+                item.withString(entry.getKey(), (String) entry.getValue());
+            } else if (entry.getValue() instanceof Number) {
+                item.withNumber(entry.getKey(), (Number) entry.getValue());
+            }
+        }
+
+        return item;
+    }
+
     public void loadPropertyData(String tableName, String fileName) throws IOException {
         Table table = dynamoDB.getTable(tableName);
 
@@ -206,32 +184,55 @@ public class PropertyDbWrapper {
         parser.close();
     }
 
-    public void deleteTable(String tableName) {
-        System.out.println("Deleting table " + tableName + "...");
-        Table table = dynamoDB.getTable(tableName);
-        table.delete();
 
-        // Wait for table to be deleted
-        System.out.println("Waiting for " + tableName + " to be deleted...");
+    public void createPropertyTable(String tableName) throws InterruptedException {
+        System.out.println("Attempting to create table; please wait...");
+
+        // Attribute definitions
+        ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<AttributeDefinition>();
+
+        attributeDefinitions.add(new AttributeDefinition().withAttributeName("ListingId").withAttributeType(ScalarAttributeType.S));
+        attributeDefinitions.add(new AttributeDefinition().withAttributeName("ListingDate").withAttributeType(ScalarAttributeType.S));
+        //attributeDefinitions.add(new AttributeDefinition().withAttributeName("Price").withAttributeType(ScalarAttributeType.N));
+        attributeDefinitions.add(new AttributeDefinition().withAttributeName("County").withAttributeType(ScalarAttributeType.S));
+
+        // Key schema for table
+        ArrayList<KeySchemaElement> tableKeySchema = new ArrayList<KeySchemaElement>();
+        tableKeySchema.add(new KeySchemaElement().withAttributeName("ListingId").withKeyType(KeyType.HASH)); // Partition
+        tableKeySchema.add(new KeySchemaElement().withAttributeName("ListingDate").withKeyType(KeyType.RANGE));
+
+        // Initial provisioned throughput settings for the indexes
+        ProvisionedThroughput ptIndex = new ProvisionedThroughput().withReadCapacityUnits(1L)
+                .withWriteCapacityUnits(1L);
+
+        // CreateDateIndex
+        GlobalSecondaryIndex listingDateIndex = new GlobalSecondaryIndex().withIndexName("ListingDateIndex")
+                .withProvisionedThroughput(ptIndex)
+                .withKeySchema(new KeySchemaElement().withAttributeName("County").withKeyType(KeyType.HASH), // Partition
+                        new KeySchemaElement().withAttributeName("ListingDate").withKeyType(KeyType.RANGE)) // Sort
+                .withProjection(new Projection().withProjectionType("ALL"));
+
+        CreateTableRequest createTableRequest = new CreateTableRequest().withTableName(tableName)
+                .withProvisionedThroughput(
+                        new ProvisionedThroughput().withReadCapacityUnits((long) 1).withWriteCapacityUnits((long) 1))
+                .withAttributeDefinitions(attributeDefinitions).withKeySchema(tableKeySchema)
+                .withGlobalSecondaryIndexes(listingDateIndex);
+
+
+        System.out.println("Creating table " + tableName + "...");
+        dynamoDB.createTable(createTableRequest);
+
+        // Wait for table to become active
+        System.out.println("Waiting for " + tableName + " to become ACTIVE...");
         try {
-            table.waitForDelete();
+            Table table = dynamoDB.getTable(tableName);
+            table.waitForActive();
         }
         catch (InterruptedException e) {
             e.printStackTrace();
         }
+
     }
 
-    public Item buildPropertyItem(String listingId, String listingDate, Map<String, Object> additionalData) {
-        Item item = new Item().withPrimaryKey("ListingId", listingId, "ListingDate", listingDate);
-        for (Map.Entry<String, Object> entry : additionalData.entrySet()) {
-            if (entry.getValue() instanceof String) {
-                item.withString(entry.getKey(), (String) entry.getValue());
-            } else if (entry.getValue() instanceof Number) {
-                item.withNumber(entry.getKey(), (Number) entry.getValue());
-            }
-        }
-
-        return item;
-    }
 
 }
