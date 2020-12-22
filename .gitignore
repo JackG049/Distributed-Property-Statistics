@@ -4,4 +4,4 @@
 *.project
 *.classpath
 *.factorypath
-*.settings
+.settings/
