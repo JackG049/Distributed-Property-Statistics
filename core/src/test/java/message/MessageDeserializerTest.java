@@ -44,7 +44,7 @@ public class MessageDeserializerTest {
         for (int i = 0; i < 10; i++) {
             messages[i] = new PropertyMessage(Instant.now().toEpochMilli() + i, LocalDate.now(), new PropertyData("mayo", "prop" + i, 10, "D" + i));
         }
-        final Message<PropertyMessage[]> batchMessage = new BatchMessage(UUID.randomUUID(),1, Instant.EPOCH.toEpochMilli(), new Query("mayo", null, null, null, null), messages);
+        final Message<PropertyMessage[]> batchMessage = new BatchMessage(UUID.randomUUID(),1, Instant.EPOCH.toEpochMilli(), new Query("mayo", null, null, null, null, null, null), messages);
         final String data = objectMapper.writeValueAsString(batchMessage);
         final Message<?> deserializedMessage = deserializer.deserialize(data);
         assertNotNull(deserializedMessage);

@@ -15,7 +15,8 @@ import java.io.Serializable;
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include= JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({
         @JsonSubTypes.Type(name="batch", value=BatchMessage.class),
-        @JsonSubTypes.Type(name="property", value=PropertyMessage.class)})
+        @JsonSubTypes.Type(name="property", value=PropertyMessage.class),
+        @JsonSubTypes.Type(name="result", value=ResultsMessage.class)})
 public interface Message<T> extends Serializable {
     T getData();
     long getTimestamp();
