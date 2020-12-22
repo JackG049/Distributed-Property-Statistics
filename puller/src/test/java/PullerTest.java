@@ -22,6 +22,7 @@ public class PullerTest {
 
     @Test
     public void pullFromDatabaseTest()  {
+        /*
         ItemCollection<QueryOutcome> items = puller.pullFromDatabase(DEFAULT_TABLE_NAME, "2020-12-01", "2020-12-24", new HashMap<>());
 
         Iterator<Item> iterator = items.iterator();
@@ -30,6 +31,8 @@ public class PullerTest {
             item = iterator.next();
             System.out.println(item.toJSONPretty());
         }
+
+         */
     }
 
 
