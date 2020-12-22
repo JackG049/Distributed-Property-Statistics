@@ -13,7 +13,6 @@
         <module>balancer</module>
         <module>statistics</module>
         <module>broker</module>
-        <module>producer</module>
         <module>generator</module>
     </modules>
 

@@ -33,11 +33,16 @@ public class ClientController {
 
     private Map<Pair<UUID, Integer>,StatisticsResult[]> map;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientController.class);
-    private final MessageDeserializer deserializer = new MessageDeserializer(new ObjectMapper());
+    private static final MessageDeserializer deserializer = new MessageDeserializer(new ObjectMapper());
     private final UUID uuid = UUID.randomUUID();
-    private static Properties props = loadPropertiesFromFile("consumer.properties");
-    private ResultsHandler resultsHandler = new ResultsHandler(props, deserializer);
-    private int partitionId = resultsHandler.getPartitionId();
+    private static final Properties props;
+    static {
+        props = loadPropertiesFromFile("consumer.properties");
+        props.setProperty("group.id",  "results_client");
+    }
+    private final ResultsHandler resultsHandler = new ResultsHandler(props, deserializer);
+    private final int partitionId = resultsHandler.getPartitionId();
+
 
     @GetMapping("/")
     public String home(Model model) {
