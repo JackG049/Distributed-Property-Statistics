@@ -1,0 +1,22 @@
+{
+	"daft_ie": [
+		{
+			"PutRequest" : {
+				"Item" : {
+						"County": {"S": "Galway"},
+						"ListingDate": {"S": "2020-11-24"},
+						"Price": {"N": "1525"}
+				}
+			}
+		},
+		{
+			"PutRequest" : {
+				"Item" : {
+					"County": {"S": "Galway"},
+					"ListingDate": {"S": "2020-11-25"},
+					"Price": {"N": "1200"}
+				}
+			}
+		}
+	]
+}

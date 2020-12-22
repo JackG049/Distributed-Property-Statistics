@@ -15,14 +15,14 @@ import org.apache.commons.lang3.StringUtils;
  *
  * Created by Alvin Alexander, http://alvinalexander.com
  */
-public class DatabaseWrapper {
+public class MySqlDatabaseWrapper {
     // Maps a database name e.g 'daft_ie' to a db connection
     private final Map<String, Connection> connectionMap = new HashMap();
     private String databaseIp;
     private int databasePortNum;
 
     // todo add param checking
-    public DatabaseWrapper(String databaseIp, int databasePortNum){
+    public MySqlDatabaseWrapper(String databaseIp, int databasePortNum){
         this.databaseIp = databaseIp;
         this.databasePortNum = databasePortNum;
     }

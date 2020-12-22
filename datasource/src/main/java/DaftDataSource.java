@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.Map;
 
 public class DaftDataSource implements DataSource{
-    private DatabaseWrapper databaseWrapper;
+    private MySqlDatabaseWrapper databaseWrapper;
     private String databaseName;
 
     public DaftDataSource(String databaseName, String databaseIp, int databasePort) throws SQLException {
-        this.databaseWrapper = new DatabaseWrapper(databaseIp, databasePort);
+        this.databaseWrapper = new MySqlDatabaseWrapper(databaseIp, databasePort);
         this.databaseName = databaseName;
 
         this.databaseWrapper.addConnection(databaseName);

@@ -1,0 +1,6 @@
+- ~~add batch reads writes~~
+- ~~change the primary key~~
+- allow reads from file for DB initialisation 
+- write default queries for pullers: last update, fetch data range, write new data
+- test local client on Wyman and Jack's computers
+- create Daft and MyHomes mocks

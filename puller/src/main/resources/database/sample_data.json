@@ -1,0 +1,11 @@
+[
+	{
+		"ListingId" : "Daft_0",
+		"ListingDate" : "2020-12-08",
+		"ListingType": "Rent",
+		"PropertyType": "Appartment",
+		"County" : "Mayo",
+		"Price" : 400,
+		"Bedrooms": 2 
+	}
+]
