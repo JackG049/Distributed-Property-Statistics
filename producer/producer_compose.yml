@@ -1,0 +1,10 @@
+version: '3'
+services:
+  daft_statistics:
+    image: producer:latest
+    container_name: producer
+    networks:
+      - distributed-property-statistics_kafka_network
+networks:
+  distributed-property-statistics_kafka_network:
+    external: true
