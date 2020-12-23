@@ -250,5 +250,14 @@ public class PropertyDbWrapper {
 
     }
 
+    public boolean isLive() {
+        try {
+            getTableNames();
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
 
 }

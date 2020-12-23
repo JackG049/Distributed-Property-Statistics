@@ -12,6 +12,7 @@ import puller.PropertyDbWrapper;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class PropertyDbWrapperTest {
@@ -19,9 +20,11 @@ public class PropertyDbWrapperTest {
     private static boolean isDatabaseRunning = false;
     private static Set<String> tables = new HashSet();
     private static String DEFAULT_TABLE_NAME = "daft_ie";
+    private static boolean hitIf = false;
 
     @BeforeClass
     public static void setup() {
+
         try {
             if (databaseWrapper.getTableNames().isEmpty()) {
                 System.out.println(tables);

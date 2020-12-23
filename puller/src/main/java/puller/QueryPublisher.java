@@ -27,11 +27,12 @@ public class QueryPublisher {
         this.serializer = Preconditions.checkNotNull(serializer, "serializer must not be null");
     }
 
+    // todo constants
     public void publish(BatchMessage message) {
         try {
             LOGGER.info("Preparing to publish results to Kafka");
             final ProducerRecord<UUID, String> record =
-                    new ProducerRecord<>(KafkaConstants.RESULTS, message.getPartitionID(), message.getUuid(), serializer.serialize(message));
+                    new ProducerRecord<>(KafkaConstants.REQUESTS_MYHOME, message.getPartitionID(), message.getUuid(), serializer.serialize(message));
             producer.send(record, (metadata, e) -> {
                 if(e != null) {
                     e.printStackTrace();

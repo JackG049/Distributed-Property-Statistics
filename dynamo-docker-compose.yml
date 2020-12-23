@@ -1,0 +1,11 @@
+version: '3.3'
+
+services:
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    container_name: dynamodb
+    ports:
+     - "8000:8000"
+       #volumes:
+       #  - "/etc/timezone:/etc/timezone:ro"
+       #  - "/etc/localtime:/etc/localtime:ro"

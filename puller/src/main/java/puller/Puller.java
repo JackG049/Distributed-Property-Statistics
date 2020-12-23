@@ -23,9 +23,9 @@ public class Puller {
     private QueryPublisher queryPublisher;
     private Set<String> tableNames;
 
-    public Puller(Set<String> tables) {
+    public Puller() {
         //queryPublisher = new QueryPublisher();
-
+        Set<String> tables = Set.of("daft_ie");
         tableNames = databaseWrapper.getTableNames();
         Set<String> absentTables = Sets.difference(tables, tableNames);
 
@@ -46,8 +46,8 @@ public class Puller {
      *
      * @param query
      */
-    @RequestMapping(value = "/quotations", method = RequestMethod.POST)
-    public void query(@RequestBody Query query) {
+    @RequestMapping(value = "/query", method = RequestMethod.POST)
+    public void query(@RequestBody Query query) { //request message todo
         List<ItemCollection<QueryOutcome>> rawQueryData = new ArrayList<>();
         for (String tableName : tableNames) {
             getLatestDatabaseEntry(tableName, query);
@@ -85,9 +85,9 @@ public class Puller {
      * Bundle up data that needs to be processed
      */
     public BatchMessage packageData(Query query, List<ItemCollection<QueryOutcome>> rawQueryData) {
-        UUID uuid = UUID.randomUUID();
-        int partitionId = 0;
-        long timestamp = Instant.now().toEpochMilli();
+        UUID uuid = UUID.randomUUID(); //client
+        int partitionId = 0; //client
+        long timestamp = Instant.now().toEpochMilli(); //client
         List<PropertyMessage> data = new ArrayList<>();
 
         for (ItemCollection<QueryOutcome> queryResults : rawQueryData) {
