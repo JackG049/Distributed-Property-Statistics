@@ -3,9 +3,8 @@ package com.dsp.service;
 import com.dsp.message.MessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import util.Util;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Properties;
 
 public class Statistics {
@@ -28,8 +27,8 @@ public class Statistics {
             topic = args[0];
         }
 
-        final Properties consumerProperties = loadPropertiesFromFile(Statistics.CONSUMER_PROPERTIES);
-        final Properties producerProperties = loadPropertiesFromFile(Statistics.PRODUCER_PROPERTIES);
+        final Properties consumerProperties = Util.loadPropertiesFromFile(Statistics.CONSUMER_PROPERTIES);
+        final Properties producerProperties = Util.loadPropertiesFromFile(Statistics.PRODUCER_PROPERTIES);
         if (host != null) {
             LOGGER.info("Host argument passed, using user-specified value");
             consumerProperties.setProperty("bootstrap.servers", host);
@@ -39,23 +38,5 @@ public class Statistics {
         LOGGER.debug("Consumer Group = " + topic + "_statistics");
         final MessageHandler messageHandler = new MessageHandler(producerProperties, consumerProperties, topic);
         messageHandler.startHandlers();
-    }
-
-    private static Properties loadPropertiesFromFile(final String fileName) {
-        final Properties properties = new Properties();
-
-        try (final InputStream propertiesInputStream = Statistics.class.getClassLoader().getResourceAsStream(fileName)) {
-            LOGGER.info("Attempting to load properties from " + fileName + "...");
-            properties.load(propertiesInputStream);
-            LOGGER.info("Success");
-
-        } catch (final IOException ex) {
-            LOGGER.warn("Failure");
-            ex.printStackTrace();
-            /*
-                Do we fail fully and fast or do we try to recover?
-             */
-        }
-        return properties;
     }
 }
