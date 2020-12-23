@@ -3,6 +3,7 @@ package partitioning;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import message.PropertyMessage;
+import model.Query;
 import org.apache.commons.text.StringSubstitutor;
 
 import java.util.Map;
@@ -34,5 +35,9 @@ public class Partitioner {
 
     public Partition partition(final Map<String, ?> data) {
         return new Partition(StringSubstitutor.replace(template, data, "{", "}"));
+    }
+
+    public Partition partition(final Query query) {
+        return new Partition(StringSubstitutor.replace(template, query.asMap(), "{", "}"));
     }
 }

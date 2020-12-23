@@ -35,7 +35,7 @@ public class StatisticsProcessorTest {
                 new PropertyMessage(1, LocalDate.EPOCH, new PropertyData("Mayo", "house", 175000, "M", ImmutableMap.of())),
                 new PropertyMessage(1, LocalDate.EPOCH, new PropertyData("Mayo", "house", 237000, "M", ImmutableMap.of()))
         );
-        final StatisticsProcessor statisticsProcessor = new StatisticsProcessor(new Query("Mayo", "house", null, null, null));
+        final StatisticsProcessor statisticsProcessor = new StatisticsProcessor(new Query("Mayo", "house", null, null, null, null, null));
         final StatisticsResult[] results = statisticsProcessor.apply(messages.toArray(new PropertyMessage[0]));
         assertEquals(1, results.length);
 

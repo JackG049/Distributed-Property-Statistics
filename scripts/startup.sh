@@ -1,4 +1,4 @@
-mvn package -pl statistics
+mvn package
 cd statistics/ || exit
 docker build --tag statistics:latest .
 cd ..

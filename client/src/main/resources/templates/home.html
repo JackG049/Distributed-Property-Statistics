@@ -1,0 +1,78 @@
+<html>
+    <head>
+        <title>Housing Prices</title>
+        <link rel="stylesheet" href="css/common.css">
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg header">
+            <div>
+                <h1>Housing Prices</h1>
+            </div>
+        </nav>
+        <form method="POST" action ="/query">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-2 align-self-center">
+                        <label for="county">County:</label>
+                    </div>
+                    <div class="col-lg-10">
+                        <select name="cars" id="cars">
+                            <option value="Dublin">Dublin</option>
+                            <option value="Galway">Galway</option>
+                            <option value="Cork">Cork</option>
+                          </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-2">
+                        <label for="type">Property Type:</label>
+                    </div>
+                    <div class="col-lg-10">
+                        <select name="cars" id="cars">
+                            <option value="Test">Test</option>
+                            <option value="Test">Test</option>
+                            <option value="Test">Test</option>
+                          </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-2">
+                        <label for="sDate">Start Date: (DD-MM-YYYY)</label>
+                    </div>
+                    <div class="col-lg-10">
+                        <input name="sDate" id="sDate">
+                    </div>
+                </div> 
+                <div class="row">
+                    <div class="col-lg-2">
+                        <label for="eDate">End Date: (DD-MM-YYYY)</label>
+                    </div>
+                    <div class="col-lg-10">
+                        <input name="eDate" id="eDate">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-2">
+                        <label for="minPrice">Min Price:</label>
+                    </div>
+                    <div class="col-lg-10">
+                        <input name="minPrice" id="minPrice">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-2">
+                        <label for="maxPrice">Max Price:</label>
+                    </div>
+                    <div class="col-lg-10">
+                        <input name="maxPrice" id="maxPrice">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <button type="submit" class="btn btn-primary float-right">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </body>
+</html>
