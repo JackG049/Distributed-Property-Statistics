@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,6 +19,7 @@ import model.Query;
 import model.StatisticsResult;
 import rest.UrlConstants;
 import results.ResultsHandler;
+import util.Util;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -33,9 +32,10 @@ public class ClientController {
 
     private Map<Pair<UUID, Integer>,StatisticsResult[]> map;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientController.class);
-    private static final MessageDeserializer deserializer = new MessageDeserializer(new ObjectMapper());
+    private static final MessageDeserializer deserializer = new MessageDeserializer(Util.objectMapper);
     private final UUID uuid = UUID.randomUUID();
     private static final Properties props;
+    
     static {
         props = loadPropertiesFromFile("consumer.properties");
         props.setProperty("group.id",  "results_client");

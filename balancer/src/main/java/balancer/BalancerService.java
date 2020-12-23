@@ -23,6 +23,7 @@ public class BalancerService {
         loadBalancer(message);
     }
 
+    //Send requests in round robin
     private void loadBalancer(RequestMessage message) {
         RestTemplate restTemplate = new RestTemplate();
         HttpEntity<RequestMessage> request = new HttpEntity<>(message);
