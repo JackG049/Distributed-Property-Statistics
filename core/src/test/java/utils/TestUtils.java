@@ -35,7 +35,7 @@ public class TestUtils {
     }
 
     public static Query emptyQuery() {
-        return new Query(null, null, null,null, null);
+        return new Query(null, null, null, null,null,null, null);
     }
 
 }

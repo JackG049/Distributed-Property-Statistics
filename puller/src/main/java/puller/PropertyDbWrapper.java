@@ -1,7 +1,10 @@
+package puller;
+
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.document.*;
+import com.amazonaws.services.dynamodbv2.document.internal.IteratorSupport;
 import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec;
 import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
@@ -15,19 +18,14 @@ import com.google.common.collect.Sets;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * A Java MySQL SELECT statement example.
- * Demonstrates the use of a SQL SELECT statement against a
- * MySQL database, called from a Java program.
- *
- * Created by Alvin Alexander, http://alvinalexander.com
- */
 public class PropertyDbWrapper {
     private AmazonDynamoDB client;
     private DynamoDB dynamoDB;
+    private final String DEFAULT_ORIGIN_DATE = "2020-01-01";
 
 
     public PropertyDbWrapper() {
@@ -44,10 +42,29 @@ public class PropertyDbWrapper {
         return tableSet.stream().map(Table::getTableName).collect(Collectors.toSet());
     }
 
-    public void getLastWriteDate(String tableName) {
+    public String getLastWriteDate(String tableName, String county) {
+        Table table = dynamoDB.getTable(tableName);
+        Index index = table.getIndex("ListingDateIndex");
 
+        QuerySpec request = new QuerySpec()
+                .withScanIndexForward(false)
+                .withMaxResultSize(1)
+                .withKeyConditionExpression("#pk = :county")
+                .withNameMap(new NameMap().with("#pk", "County"))
+                .withValueMap(new ValueMap()
+                        .withString(":county", county));
+
+        ItemCollection<QueryOutcome> item = index.query(request);
+        IteratorSupport<Item, QueryOutcome> itemIterator = item.iterator();
+
+        if (itemIterator.hasNext()) {
+           return itemIterator.next().getString("ListingDate");
+        } else {
+            return DEFAULT_ORIGIN_DATE;
+        }
     }
 
+    //todo resolve pagenation
     public ItemCollection<QueryOutcome> queryTable(String tableName, String periodStart, String periodEnd, String county) {
         Table table = dynamoDB.getTable(tableName);
         Index index = table.getIndex("ListingDateIndex");
@@ -61,7 +78,6 @@ public class PropertyDbWrapper {
                         .withString(":end", periodEnd));
 
         ItemCollection<QueryOutcome> items = index.query(request);
-
 
         return items;
     }

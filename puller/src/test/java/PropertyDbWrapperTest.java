@@ -2,13 +2,12 @@ import com.amazonaws.SdkClientException;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.ItemCollection;
 import com.amazonaws.services.dynamodbv2.document.QueryOutcome;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import puller.PropertyDbWrapper;
 
 import java.util.*;
 
@@ -37,12 +36,16 @@ public class PropertyDbWrapperTest {
             isDatabaseRunning = true;
 
 
-            final Map<String, Object> infoMap = new HashMap<String, Object>();
-            infoMap.put("Price", 850);
-            infoMap.put("County", "Galway");
+            int propertyId = 0;
 
-            //databaseWrapper.writeData(DEFAULT_TABLE_NAME, "Daft_1", "2020-12-01", infoMap);
-            databaseWrapper.writeData(DEFAULT_TABLE_NAME, "Daft_1", "2020-12-01", infoMap);
+            while (propertyId < 5) {
+                final Map<String, Object> infoMap = new HashMap<String, Object>();
+                infoMap.put("Price", Math.random()*1500);
+                infoMap.put("County", "Galway");
+
+                databaseWrapper.writeData(DEFAULT_TABLE_NAME, "Daft_" + propertyId, "2020-12-0" + (propertyId+1), infoMap);
+                propertyId++;
+            }
 
 
         } catch (SdkClientException e) {
@@ -86,6 +89,13 @@ public class PropertyDbWrapperTest {
                 databaseWrapper.buildPropertyItem("Daft_3", "2020-12-06", propertyData));
 
         databaseWrapper.batchWriteItem(DEFAULT_TABLE_NAME, items);
+    }
+
+
+    @Test
+    public void getLastWriteTest() {
+        String date = databaseWrapper.getLastWriteDate(DEFAULT_TABLE_NAME, "Galway");
+        System.out.println("Date: " + date);
     }
 
     @Test
