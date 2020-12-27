@@ -12,6 +12,8 @@ import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -25,9 +27,18 @@ import java.util.*;
 @RestController
 public class MockPuller {
     private KafkaProducer queryPublisher;
+    private static String DEFAULT_HOST = "kafka:9093";
+
+    @Value("${hostname}")
+    private String hostname;
 
     public MockPuller() {
         System.out.println("Puller Created");
+        if (hostname != null)
+            System.out.println(hostname);
+        else
+            System.out.println("HOSTNAME is null");
+
         queryPublisher = initQueryPublisher();
     }
 
@@ -52,7 +63,6 @@ public class MockPuller {
         }
 
     }
-
 
     /**
      * Send data to be processed
@@ -79,7 +89,12 @@ public class MockPuller {
 
     private KafkaProducer initQueryPublisher() {
         Properties props = new Properties();
-        props.setProperty("bootstrap.servers", "0.0.0.0:9093");
+
+        if (StringUtils.isEmpty(hostname)) {
+            props.setProperty("bootstrap.servers", DEFAULT_HOST);
+        } else {
+            props.setProperty("bootstrap.servers", hostname);
+        }
         props.setProperty("group.id", "test");
         props.setProperty("enable.auto.commit", "true");
         props.setProperty("auto.commit.interval.ms", "1000");
