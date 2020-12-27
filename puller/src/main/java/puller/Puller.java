@@ -3,15 +3,21 @@ package puller;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.ItemCollection;
 import com.amazonaws.services.dynamodbv2.document.QueryOutcome;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Sets;
 import message.BatchMessage;
 import message.PropertyMessage;
 import model.PropertyData;
 import model.Query;
+import org.apache.kafka.clients.producer.Callback;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import util.Util;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -20,11 +26,12 @@ import java.util.*;
 @RestController
 public class Puller {
     private final PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
-    private QueryPublisher queryPublisher;
+    private KafkaProducer queryPublisher;
     private Set<String> tableNames;
 
     public Puller() {
-        //queryPublisher = new QueryPublisher();
+        queryPublisher = initQueryPublisher();
+
         Set<String> tables = Set.of("daft_ie");
         tableNames = databaseWrapper.getTableNames();
         Set<String> absentTables = Sets.difference(tables, tableNames);
@@ -54,12 +61,29 @@ public class Puller {
             //pullNewDataFromSource(tableName);
             //updateDatabase(tableName);
             rawQueryData.add(queryDatabase(tableName, query));
+
+            BatchMessage message = packageData(query, rawQueryData);
+            try {
+                sendData("requests_" + tableName, message);
+            } catch (JsonProcessingException e) {
+                System.err.println("Failed to publish request");
+                e.printStackTrace();
+            }
         }
 
-        BatchMessage message = packageData(query, rawQueryData);
-        sendData(message);
     }
 
+    private KafkaProducer initQueryPublisher() {
+        Properties props = new Properties();
+        props.setProperty("bootstrap.servers", "kafka:9093");
+        props.setProperty("group.id", "test");
+        props.setProperty("enable.auto.commit", "true");
+        props.setProperty("auto.commit.interval.ms", "1000");
+        props.setProperty("max.message.bytes", "100000");
+        props.setProperty("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.setProperty("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        return new KafkaProducer(props);
+    }
 
     /**
      * Retrieve all relevant data from the database
@@ -104,12 +128,26 @@ public class Puller {
 
     /**
      * Send data to be processed
-     *
      * @param message
      */
-    private void sendData(BatchMessage message) {
-        queryPublisher.publish(message);
+    public void sendData(final String topic, final BatchMessage message) throws JsonProcessingException {
+        TestCallback callback = new TestCallback();
+        queryPublisher.send(new ProducerRecord<>(topic, Util.objectMapper.writeValueAsString(message)), callback);
     }
+
+    private static class TestCallback implements Callback {
+        @Override
+        public void onCompletion(RecordMetadata recordMetadata, Exception e) {
+            if (e != null) {
+                System.out.println("Error while producing message to topic :" + recordMetadata);
+                e.printStackTrace();
+            } else {
+                String message = String.format("sent message to topic:%s partition:%s  offset:%s", recordMetadata.topic(), recordMetadata.partition(), recordMetadata.offset());
+                System.out.println(message);
+            }
+        }
+    }
+
 
     /**
      * Get the date of the latest update to the database
