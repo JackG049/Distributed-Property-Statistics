@@ -34,12 +34,24 @@ public class MockPuller {
 
     public MockPuller() {
         System.out.println("Puller Created");
+        Properties props = Util.loadPropertiesFromFile("producer.properties");
+        queryPublisher = new KafkaProducer(props);
+
+        /*
         if (hostname != null)
             System.out.println(hostname);
         else
             System.out.println("HOSTNAME is null");
 
         queryPublisher = initQueryPublisher();
+
+         */
+    }
+
+    public MockPuller(Properties producerProperties) {
+        System.out.println("Puller Created");
+        queryPublisher = new KafkaProducer(producerProperties);
+        System.out.println("Producer Created");
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.POST)
