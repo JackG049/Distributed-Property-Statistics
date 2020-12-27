@@ -3,28 +3,36 @@ package puller;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.ItemCollection;
 import com.amazonaws.services.dynamodbv2.document.QueryOutcome;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Sets;
+import kafka.KafkaConstants;
 import message.BatchMessage;
 import message.PropertyMessage;
 import model.PropertyData;
 import model.Query;
+import org.apache.kafka.clients.producer.Callback;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import util.Util;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 
-@RestController
 public class Puller {
     private final PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
-    private QueryPublisher queryPublisher;
+    private final MockDataSource mockDataSource = new MockDataSource();
+    private KafkaProducer queryPublisher;
     private Set<String> tableNames;
 
     public Puller() {
-        //queryPublisher = new QueryPublisher();
+        queryPublisher = initQueryPublisher();
+
         Set<String> tables = Set.of("daft_ie");
         tableNames = databaseWrapper.getTableNames();
         Set<String> absentTables = Sets.difference(tables, tableNames);
@@ -43,23 +51,28 @@ public class Puller {
     //todo return http msg
     /**
      * Main puller method. Accepts queries, pull data, sends data to processors
-     *
-     * @param query
      */
-    @RequestMapping(value = "/query", method = RequestMethod.POST)
+    //@RequestMapping(value = "/query", method = RequestMethod.POST)
     public void query(@RequestBody Query query) { //request message todo
         List<ItemCollection<QueryOutcome>> rawQueryData = new ArrayList<>();
-        for (String tableName : tableNames) {
-            getLatestDatabaseEntry(tableName, query);
-            //pullNewDataFromSource(tableName);
-            //updateDatabase(tableName);
-            rawQueryData.add(queryDatabase(tableName, query));
-        }
 
-        BatchMessage message = packageData(query, rawQueryData);
-        sendData(message);
+        //for (String tableName : tableNames) {
+            String tableName = "daft";
+            String latestEntryDate = getLatestDatabaseEntry(tableName, query);
+            PropertyMessage[] newPropertyListings = pullNewDataFromSource(tableName, latestEntryDate);
+            //updateDatabase(tableName, newPropertyListings);
+            //rawQueryData.add(queryDatabase(tableName, query));
+
+            BatchMessage message = packageData(query, rawQueryData);
+            try {
+                sendData("requests_" + tableName, message);
+            } catch (JsonProcessingException e) {
+                System.err.println("Failed to publish request");
+                e.printStackTrace();
+            }
+        //}
+
     }
-
 
     /**
      * Retrieve all relevant data from the database
@@ -102,14 +115,6 @@ public class Puller {
         return new BatchMessage(uuid, partitionId, timestamp, query, propertyDataArray);
     }
 
-    /**
-     * Send data to be processed
-     *
-     * @param message
-     */
-    private void sendData(BatchMessage message) {
-        queryPublisher.publish(message);
-    }
 
     /**
      * Get the date of the latest update to the database
@@ -120,13 +125,9 @@ public class Puller {
 
     /**
      * Check data sources for new data and pull it into
-     *
-     * @param tableName
      */
-    private void pullNewDataFromSource(String tableName) {
-        // pull from daft & myhomes
-
-        // store data
+    private PropertyMessage[] pullNewDataFromSource(String tableName, String latestEntryDate) {
+        return mockDataSource.getPropertyListings(tableName, latestEntryDate, LocalDate.now().toString());
     }
 
     /**
@@ -134,6 +135,34 @@ public class Puller {
      */
     private void updateDatabase(String tableName) {
 
+    }
+
+
+    /**
+     * Send data to be processed
+     * @param message
+     */
+    public void sendData(final String topic, final BatchMessage message) throws JsonProcessingException {
+        TestCallback callback = new TestCallback();
+        queryPublisher.send(new ProducerRecord<>(topic, Util.objectMapper.writeValueAsString(message)), callback);
+    }
+
+    public void testSendData(final String topic, final PropertyMessage[] message) throws JsonProcessingException {
+        TestCallback callback = new TestCallback();
+        queryPublisher.send(new ProducerRecord<>(topic, Util.objectMapper.writeValueAsString(message)), callback);
+    }
+
+    private static class TestCallback implements Callback {
+        @Override
+        public void onCompletion(RecordMetadata recordMetadata, Exception e) {
+            if (e != null) {
+                System.out.println("Error while producing message to topic :" + recordMetadata);
+                e.printStackTrace();
+            } else {
+                String message = String.format("sent message to topic:%s partition:%s  offset:%s", recordMetadata.topic(), recordMetadata.partition(), recordMetadata.offset());
+                System.out.println(message);
+            }
+        }
     }
 
 
@@ -158,5 +187,17 @@ public class Puller {
         additionalPropertyData.remove("Postcode");
 
         return new PropertyData(county, propertyType, price, postcode, additionalPropertyData);
+    }
+
+    private KafkaProducer initQueryPublisher() {
+        Properties props = new Properties();
+        props.setProperty("bootstrap.servers", "0.0.0.0:9093");
+        props.setProperty("group.id", "test");
+        props.setProperty("enable.auto.commit", "true");
+        props.setProperty("auto.commit.interval.ms", "1000");
+        props.setProperty("max.message.bytes", "100000");
+        props.setProperty("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.setProperty("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        return new KafkaProducer(props);
     }
 }

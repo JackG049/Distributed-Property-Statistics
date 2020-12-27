@@ -1,3 +1,5 @@
+package puller;
+
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.ItemCollection;
@@ -6,13 +8,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
-import puller.PropertyDbWrapper;
 
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class PropertyDbWrapperTest {
@@ -22,6 +23,7 @@ public class PropertyDbWrapperTest {
     private static String DEFAULT_TABLE_NAME = "daft_ie";
     private static boolean hitIf = false;
 
+    @Ignore
     @BeforeClass
     public static void setup() {
 
@@ -58,11 +60,13 @@ public class PropertyDbWrapperTest {
         }
     }
 
+    @Ignore
     @AfterClass
     public static void tearDown() {
         databaseWrapper.deleteTable(DEFAULT_TABLE_NAME);
     }
 
+    @Ignore
     @Test
     public void getTableNamesTest()  {
         assumeTrue(isDatabaseRunning);
@@ -70,10 +74,11 @@ public class PropertyDbWrapperTest {
         assertEquals(tableNames, tables);
     }
 
+    @Ignore
     @Test
     public void queryTableTest()  {
         assumeTrue(isDatabaseRunning);
-        ItemCollection<QueryOutcome> items = databaseWrapper.queryTable("daft_ie", "2020-12-01", "2020-12-24", "Galway");
+        ItemCollection<QueryOutcome> items = databaseWrapper.queryTable(DEFAULT_TABLE_NAME, "2020-12-01", "2020-12-24", "Galway");
 
         Iterator<Item> iterator = items.iterator();
         Item item = null;
@@ -84,6 +89,7 @@ public class PropertyDbWrapperTest {
 
     }
 
+    @Ignore
     @Test
     public void batchWriteTest() {
         Map<String, Object> propertyData = ImmutableMap.of("Price", 500, "County", "Galway");
@@ -95,12 +101,14 @@ public class PropertyDbWrapperTest {
     }
 
 
+    @Ignore
     @Test
     public void getLastWriteTest() {
         String date = databaseWrapper.getLastWriteDate(DEFAULT_TABLE_NAME, "Galway");
         System.out.println("Date: " + date);
     }
 
+    @Ignore
     @Test
     public void loadPropertyData() {
         //databaseWrapper.loadPropertyData(DEFAULT_TABLE_NAME, "");

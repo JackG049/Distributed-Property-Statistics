@@ -15,8 +15,8 @@ public class RequestMessage {
     private final int partitionID;
 
     public RequestMessage(@JsonProperty("id") final UUID uuid,
-                            @JsonProperty("partitionID") final int partitionID,
-                            @JsonProperty("result") final Query query,
+                          @JsonProperty("partitionID") final int partitionID,
+                          @JsonProperty("result") final Query query,
                           @JsonProperty("timestamp") final long timestamp) {
         this.uuid = uuid;
         this.partitionID = partitionID;

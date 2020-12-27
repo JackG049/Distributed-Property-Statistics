@@ -1,23 +1,28 @@
-import com.amazonaws.SdkClientException;
+package puller;
+
 import com.amazonaws.services.dynamodbv2.document.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.collect.ImmutableMap;
+import kafka.KafkaConstants;
 import message.BatchMessage;
+import message.PropertyMessage;
+import model.PropertyData;
 import model.Query;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
-import puller.PropertyDbWrapper;
-import puller.Puller;
 
+import java.time.LocalDate;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
 
 public class PullerTest {
     private static Puller puller;
     private static String DEFAULT_TABLE_NAME = "daft_ie";
     private static PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
 
+    @Ignore
     @BeforeClass
     public static void setup() {
         puller = new Puller();
@@ -34,11 +39,13 @@ public class PullerTest {
         }
     }
 
+    @Ignore
     @AfterClass
     public static void tearDown() {
         databaseWrapper.deleteTable(DEFAULT_TABLE_NAME);
     }
 
+    @Ignore
     @Test
     public void pullFromDatabaseTest()  {
         Query query = new Query("Galway", null, null,
@@ -50,12 +57,13 @@ public class PullerTest {
         Item item = null;
         while (iterator.hasNext()) {
             item = iterator.next();
-            System.out.println(item.toJSONPretty());
+            //System.out.println(item.toJSONPretty());
         }
 
     }
 
 
+    @Ignore
     @Test
     public void packageData()  {
         Query query = new Query("Galway", null, null,
@@ -65,7 +73,24 @@ public class PullerTest {
         items.add(puller.queryDatabase(DEFAULT_TABLE_NAME, query));
         BatchMessage message = puller.packageData(query, items);
 
-        System.out.println(message.getData()[0].getLocalDate().toString());
+        //System.out.println(message.getData()[0].getLocalDate().toString());
+
+    }
+
+    @Ignore
+    @Test
+    public void publishTest() throws JsonProcessingException {
+        /*
+        PropertyMessage[] messages = new PropertyMessage[1];
+        messages[0] = new PropertyMessage(
+                System.currentTimeMillis(), LocalDate.now(), new PropertyData("Galway", "house", 1000.0, "D18", ImmutableMap.of())
+        );
+
+        final BatchMessage batchMessage = new BatchMessage(UUID.randomUUID(), 0, System.currentTimeMillis(),
+                new Query("Galway", "house", null, null, null, null, null), messages);
+
+       puller.sendData(KafkaConstants.REQUESTS_DAFT, batchMessage);
+         */
 
     }
 
