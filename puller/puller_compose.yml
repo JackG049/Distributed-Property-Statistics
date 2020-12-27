@@ -8,7 +8,7 @@ services:
       KAFKA_HOST: "kafka:9093"
       #KAFKA_HOST: "0.0.0.0:9092"
     ports:
-      - '9101:9101'
+      - '8082:8082'
 networks:
   distributed-property-statistics_kafka_network:
     external: true

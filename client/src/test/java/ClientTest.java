@@ -3,6 +3,7 @@ import static org.junit.Assert.assertNotNull;
 import java.util.Properties;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import message.MessageDeserializer;
@@ -14,6 +15,7 @@ public class ClientTest {
     private Properties props;
     private MessageDeserializer deserializer;
 
+    @Ignore
     @Before
     public void init() {
         props = Util.loadPropertiesFromFile("consumertest.properties");
@@ -21,6 +23,7 @@ public class ClientTest {
         deserializer = new MessageDeserializer(Util.objectMapper);
     }
 
+    @Ignore
     @Test
     public void testKafkaConnection() {
         ResultsHandler resultsHandler = new ResultsHandler(props, deserializer);
