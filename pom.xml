@@ -10,6 +10,7 @@
     <version>1.0</version>
     <modules>
         <module>core</module>
+        <module>client</module>
         <module>balancer</module>
         <module>statistics</module>
         <module>generator</module>
