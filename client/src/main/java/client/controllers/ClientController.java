@@ -82,7 +82,7 @@ public class ClientController {
         int lim = 2;
         while(count != lim) {
 
-            if(!resultsHandler.isEmpty(uuid))
+            if(resultsHandler.isEmpty(uuid))
                 Thread.sleep(200);
             else {
                 StatisticsResult[] results = resultsHandler.getResult(uuid);
