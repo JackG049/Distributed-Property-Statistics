@@ -24,6 +24,13 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * ConsumerHandler is responsible for polling periodically from the specified requests topic(which is set on startup).
+ * If it finds a {@link org.apache.kafka.clients.consumer.ConsumerRecord} in the topic it then deserializes it, extracts
+ * the necessary information such as the uuid, partitionID and {@link message.BatchMessage} and then processes the
+ * {@link message.BatchMessage} asynchronously. Once the batch has been processed the results are put into the global
+ * results map.
+ */
 public class ConsumerHandler extends KafkaHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerHandler.class);
 

@@ -4,6 +4,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Class used to build templates for {@link partitioning.Partitioner}s. These templates are then used for partitioning
+ * and the resulting {@link partitioning.Partition}s will follow this template.
+ */
 public final class TemplateBuilder {
     private final Map<String, Boolean> templateMap = new LinkedHashMap<>();
 

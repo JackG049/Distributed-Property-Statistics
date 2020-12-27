@@ -13,6 +13,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+/**
+ * Processor class for processing batches of {@link message.PropertyMessage}s. Produces an array of {@link model.StatisticsResult}.
+ */
 public class StatisticsProcessor implements Function<PropertyMessage[], StatisticsResult[]> {
     private final Partitioner partitioner;
 
@@ -20,6 +23,13 @@ public class StatisticsProcessor implements Function<PropertyMessage[], Statisti
         this.partitioner = new Partitioner(buildTemplateFromQuery(query));
     }
 
+    /**
+     * Partitions the full array of {@link message.PropertyMessage}s based on the given query. Then it calculates the
+     * statistics for each of those partitions using a {@link com.dsp.processing.StatisticsProcessor} and collects these
+     * results to an array.
+     * @param propertyMessages The batch of {@link message.PropertyMessage}s to process.
+     * @return An array of {@link model.StatisticsResult}s based on the input messages.
+     */
     @Override
     public StatisticsResult[] apply(final PropertyMessage[] propertyMessages) {
         final Map<Partition, List<PropertyMessage>> partitions = new ConcurrentHashMap<>();

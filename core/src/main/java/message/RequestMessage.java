@@ -7,6 +7,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import model.Query;
 
+/**
+ * Message created by the client to request information on properties.
+ */
 @Getter
 public class RequestMessage {
     private final Query query;
