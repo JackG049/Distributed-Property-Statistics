@@ -17,10 +17,10 @@
                     </div>
                     <div class="col-lg-10">
                         <select name="cars" id="cars">
-                            <option value="Dublin">Dublin</option>
-                            <option value="Galway">Galway</option>
-                            <option value="Cork">Cork</option>
-                          </select>
+                            <tr th:each="county : ${counties}">
+                                <td><option value="${county}"><span th:text="${county}"></span></td>
+                            </tr>
+                        </select>
                     </div>
                 </div>
                 <div class="row">
