@@ -83,7 +83,7 @@ public class ResultsHandler implements Runnable {
     }
 
     public boolean isEmpty(UUID uuid) {
-        return this.map.containsKey(Pair.of(uuid, partitionId)) ? true : false;
+        return this.map.containsKey(Pair.of(uuid, partitionId)) ? false : true;
     }
 
     public StatisticsResult[] getResult(UUID uuid) {

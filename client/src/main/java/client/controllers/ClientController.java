@@ -3,9 +3,13 @@ package client.controllers;
 import java.time.Instant;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+
+import com.mysql.cj.x.protobuf.MysqlxDatatypes.Array;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Controller;
@@ -13,10 +17,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.client.RestTemplate;
 
+import counties.County;
 import message.MessageDeserializer;
 import message.RequestMessage;
 import model.Query;
 import model.StatisticsResult;
+import partitioning.Partition;
 import rest.UrlConstants;
 import results.ResultsHandler;
 import util.Util;
@@ -30,16 +36,20 @@ import org.springframework.web.bind.annotation.PostMapping;
 @Controller
 public class ClientController {
 
-    private Map<Pair<UUID, Integer>,StatisticsResult[]> map;
+    private Map<String, Map<String, Double>> daftMap = new HashMap<>();
+    private Map<String, Map<String, Double>> myhomeMap = new HashMap<>();
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientController.class);
     private static final MessageDeserializer deserializer = new MessageDeserializer(Util.objectMapper);
-    private final UUID uuid = UUID.randomUUID();
+    private UUID uuid;
     private static final Properties props;
+    private ArrayList<String> dates = new ArrayList<>();
     
     static {
-        props = loadPropertiesFromFile("consumer.properties");
+        props = Util.loadPropertiesFromFile("consumer.properties");
         props.setProperty("group.id",  "results_client");
     }
+
     private final ResultsHandler resultsHandler = new ResultsHandler(props, deserializer);
     private final int partitionId = resultsHandler.getPartitionId();
 
@@ -47,6 +57,8 @@ public class ClientController {
     @GetMapping("/")
     public String home(Model model) {
         model.addAttribute("Heading", "Home");
+        County counties = new County();
+        model.addAttribute("counties", counties.getCounties());
         return "home.html";
     }
 
@@ -57,40 +69,41 @@ public class ClientController {
         RestTemplate restTemplate = new RestTemplate();
         Query query = new Query(county, type, "test", sDate, eDate, Double.parseDouble(minPrice),
                 Double.parseDouble(maxPrice));
+        uuid = UUID.randomUUID();
         RequestMessage requestMessage = new RequestMessage(uuid, partitionId, query,
                 Instant.EPOCH.toEpochMilli());
         HttpEntity<RequestMessage> request = new HttpEntity<>(requestMessage);
-        restTemplate.postForObject(UrlConstants.BALANCER, request, RequestMessage.class);
-        while(map.isEmpty()) {
-            if(resultsHandler.isEmpty(uuid))
+        restTemplate.postForObject(UrlConstants.BALANCER + "/client", request, RequestMessage.class);
+        
+        daftMap.clear();
+        myhomeMap.clear();
+
+        int count = 0;
+        int lim = 2;
+        while(count != lim) {
+
+            if(!resultsHandler.isEmpty(uuid))
                 Thread.sleep(200);
             else {
-                map.put(Pair.of(uuid, partitionId), resultsHandler.getResult(uuid));
+                StatisticsResult[] results = resultsHandler.getResult(uuid);
+
+                for(StatisticsResult result : results) {
+                    for(Partition partition : result.getStatistics().keySet()) {
+                        if(count == 0)
+                            daftMap.put(parsePartition(partition), result.getStatistics().get(partition));
+                        else 
+                            myhomeMap.put(parsePartition(partition), result.getStatistics().get(partition));
+                    }
+                    count++;
+                }
             }
         }
-        System.out.println(map.get(Pair.of(uuid, partitionId)));
-
-        //todo display.html
-        return "redirect:/display";
-    }
-
-    @GetMapping("/display")
-    public String display(Model model) {
         return "display.html";
     }
 
-    private static Properties loadPropertiesFromFile(final String fileName) {
-        final Properties properties = new Properties();
-
-        try (final InputStream propertiesInputStream = ClientController.class.getClassLoader().getResourceAsStream(fileName)) {
-            LOGGER.info("Attempting to load properties from " + fileName + "...");
-            properties.load(propertiesInputStream);
-            LOGGER.info("Success");
-
-        } catch (final IOException ex) {
-            LOGGER.warn("Failure");
-            ex.printStackTrace();
-        }
-        return properties;
+    private String parsePartition(Partition partition) {
+        String res = partition.getValue();
+        res = res.split("_")[1];
+        return res;
     }
 }
