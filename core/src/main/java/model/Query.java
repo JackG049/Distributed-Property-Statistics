@@ -10,6 +10,10 @@ import com.google.common.collect.ImmutableMap;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
+/**
+ * Class representing a user query. This information can be used to construct queries based on a number of parameters
+ * which can then be graphed.
+ */
 @Getter
 @EqualsAndHashCode
 public class Query {
