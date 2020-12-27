@@ -14,18 +14,29 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-
+/**
+ * Class responsible for calculating the statistics for a given set of {@link message.PropertyMessage}s. It does so
+ * by first further partitioning the data further based on the date associated with it. Then it utilizes Welford's online
+ * algorithm for calculating the mean, variance and standard deviation for the dataset. The median is then calculated
+ * separately.
+ */
 public class StatisticsCalculator {
-    public static final Function<List<PropertyMessage>, Double> median = (messages) -> messages.stream()
+    static final Function<List<PropertyMessage>, Double> median = (messages) -> messages.stream()
             .sorted(Comparator.comparingDouble(PropertyMessage::getPropertyPrice))
             .collect(Collectors.toList()).get(messages.size() / 2).getPropertyPrice();
 
     private final Partitioner datePartitioner = new Partitioner("{year}_{month}");
 
-    public StatisticsResult calculateStatistics(final Partition global, final List<PropertyMessage> messages) {
+    /**
+     * Calculates the statistics for the given set of messages.
+     * @param globalPartition Refers to the top level of partition, which is created based on the {@link model.Query}.
+     * @param messages The list of {@link message.PropertyMessage}s for which the statistics will be calculated.
+     * @return A {@link model.StatisticsResult} containing the statistics for the partitioned data.
+     */
+    public StatisticsResult calculateStatistics(final Partition globalPartition, final List<PropertyMessage> messages) {
         final Map<Partition, List<PropertyMessage>> bucketedMessages = new HashMap<>();
 
-        // bucket based on localdate ({year}_{month})
+        // partition based on localdate ({year}_{month})
         messages.forEach(message -> {
             final Partition partition = datePartitioner.partition(ImmutableMap.of(
                     "month", message.getLocalDate().getMonthValue(),
@@ -48,7 +59,7 @@ public class StatisticsCalculator {
             statisticsResults.put("variance", onlineStatistics.variance());
             statisticsResults.put("stddev", onlineStatistics.stddev());
 
-            results.put(Partition.join(global, new Partition(entry.getKey().getValue())), statisticsResults);
+            results.put(Partition.join(globalPartition, new Partition(entry.getKey().getValue())), statisticsResults);
         }
         return new StatisticsResult(results);
     }

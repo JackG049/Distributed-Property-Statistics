@@ -17,19 +17,28 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 
-public class PublishHandler extends KafkaHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PublishHandler.class);
+/**
+ * {@link com.dsp.message.KafkaHandler} implementation for Producing messages back to the Kafka results topic.
+ */
+public class ProducerHandler extends KafkaHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProducerHandler.class);
 
     private final MessageSerializer serializer;
     private final Producer<UUID, String> producer;
 
-    public PublishHandler(final ConcurrentMap<Pair<UUID, Integer>, StatisticsResult[]> results,
-                          final Properties producerProperties, final MessageSerializer serializer) {
+    public ProducerHandler(final ConcurrentMap<Pair<UUID, Integer>, StatisticsResult[]> results,
+                           final Properties producerProperties, final MessageSerializer serializer) {
         super(results);
         this.producer = new KafkaProducer<>(producerProperties);
         this.serializer = Preconditions.checkNotNull(serializer, "serializer must not be null");
     }
 
+    /**
+     * Periodically checks the results map which is updated by the {@link com.dsp.message.ConsumerHandler}. If it finds
+     * results, it enters the synchronized block which creates {@link org.apache.kafka.clients.producer.ProducerRecord}s
+     * that will be published onto the {@link kafka.KafkaConstants#RESULTS} topic. Then the map is cleared before leaving
+     * the synchronized block.
+     */
     @Override
     public void run() {
         try {
@@ -45,10 +54,10 @@ public class PublishHandler extends KafkaHandler {
                             final int partitionId = result.getKey().getValue();
                             final ResultsMessage message = new ResultsMessage(uuid, partitionId, System.currentTimeMillis(), result.getValue());
                             final ProducerRecord<UUID, String> record =
-                                    new ProducerRecord<>(KafkaConstants.RESULTS, partitionId, uuid,serializer.serialize(message));
-                            LOGGER.info("partitionID: "+partitionId);
+                                    new ProducerRecord<>(KafkaConstants.RESULTS, partitionId, uuid, serializer.serialize(message));
+                            LOGGER.debug("partitionID: " + partitionId);
                             producer.send(record, (metadata, e) -> {
-                                if(e != null) {
+                                if (e != null) {
                                     e.printStackTrace();
                                 } else {
                                     LOGGER.info("Published record to Kafka at offset: " + metadata.offset());

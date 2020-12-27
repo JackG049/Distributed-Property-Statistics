@@ -7,14 +7,18 @@ import util.Util;
 
 import java.util.Properties;
 
+/**
+ * Entry point to the Statistics Processing module. The Kafka host and the Kafka topic are passed to the program as
+ * command line arguments and using these alongside properties which are loaded in the {@link com.dsp.message.MessageHandler}
+ * is created and the processes started.
+ */
 public class Statistics {
     private static final Logger LOGGER = LoggerFactory.getLogger(Statistics.class);
-    private static final int SUPPORTED_NUM_ARGS = 2;
     private static final String CONSUMER_PROPERTIES = "consumer.properties";
     private static final String PRODUCER_PROPERTIES = "producer.properties";
+    private static final int SUPPORTED_NUM_ARGS = 2;
 
     public static void main(final String[] args) {
-        // For now just going to assume we have everything correct and that the user never gets anything wrong
         String topic = null;
         String host = null;
         if (args.length == SUPPORTED_NUM_ARGS) {
@@ -34,6 +38,8 @@ public class Statistics {
             consumerProperties.setProperty("bootstrap.servers", host);
             producerProperties.setProperty("bootstrap.servers", host);
         }
+
+        // Sets the group.id for Kafka and enables the Consumer group functionality.
         consumerProperties.setProperty("group.id", topic + "_statistics");
         LOGGER.debug("Consumer Group = " + topic + "_statistics");
         final MessageHandler messageHandler = new MessageHandler(producerProperties, consumerProperties, topic);
