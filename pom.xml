@@ -15,7 +15,6 @@
         <module>broker</module>
         <module>generator</module>
         <module>puller</module>
-        <module>datasource</module>
     </modules>
 
     <properties>

@@ -22,10 +22,20 @@ public class QueryPublisher {
     private final MessageSerializer serializer;
     private final Producer<UUID, String> producer;
 
-    public QueryPublisher(final Properties producerProperties, final MessageSerializer serializer) {
-        this.producer = new KafkaProducer<>(producerProperties);
+    public QueryPublisher(final MessageSerializer serializer) {
+        Properties props = new Properties();
+        props.setProperty("bootstrap.servers", "0.0.0.0:9093");
+        props.setProperty("group.id", "test");
+        props.setProperty("enable.auto.commit", "true");
+        props.setProperty("auto.commit.interval.ms", "1000");
+        props.setProperty("max.message.bytes", "100000");
+        props.setProperty("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.setProperty("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+
+        this.producer = new KafkaProducer<>(props);
         this.serializer = Preconditions.checkNotNull(serializer, "serializer must not be null");
     }
+
 
     // todo constants
     public void publish(BatchMessage message) {
