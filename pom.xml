@@ -15,6 +15,7 @@
         <module>statistics</module>
         <module>generator</module>
         <module>puller</module>
+        <module>client</module>
     </modules>
 
     <properties>
