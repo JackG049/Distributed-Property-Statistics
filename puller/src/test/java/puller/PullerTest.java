@@ -22,6 +22,7 @@ public class PullerTest {
     private static String DEFAULT_TABLE_NAME = "daft_ie";
     private static PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
 
+    @Ignore
     @BeforeClass
     public static void setup() {
         puller = new Puller();
@@ -38,6 +39,7 @@ public class PullerTest {
         }
     }
 
+    @Ignore
     @AfterClass
     public static void tearDown() {
         databaseWrapper.deleteTable(DEFAULT_TABLE_NAME);

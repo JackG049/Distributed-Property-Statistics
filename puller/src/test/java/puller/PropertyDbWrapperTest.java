@@ -23,6 +23,7 @@ public class PropertyDbWrapperTest {
     private static String DEFAULT_TABLE_NAME = "daft_ie";
     private static boolean hitIf = false;
 
+    @Ignore
     @BeforeClass
     public static void setup() {
 
@@ -59,6 +60,7 @@ public class PropertyDbWrapperTest {
         }
     }
 
+    @Ignore
     @AfterClass
     public static void tearDown() {
         databaseWrapper.deleteTable(DEFAULT_TABLE_NAME);
