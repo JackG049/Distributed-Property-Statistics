@@ -6,6 +6,7 @@ import com.amazonaws.services.dynamodbv2.document.ItemCollection;
 import com.amazonaws.services.dynamodbv2.document.QueryOutcome;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import message.PropertyMessage;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -14,13 +15,14 @@ import org.junit.Test;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class PropertyDbWrapperTest {
     private final static PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
     private static boolean isDatabaseRunning = false;
     private static Set<String> tables = new HashSet();
-    private static String DEFAULT_TABLE_NAME = "daft_ie";
+    private static String DEFAULT_TABLE_NAME = "daft";
     private static boolean hitIf = false;
 
     @Ignore
@@ -78,15 +80,8 @@ public class PropertyDbWrapperTest {
     @Test
     public void queryTableTest()  {
         assumeTrue(isDatabaseRunning);
-        ItemCollection<QueryOutcome> items = databaseWrapper.queryTable(DEFAULT_TABLE_NAME, "2020-12-01", "2020-12-24", "Galway");
-
-        Iterator<Item> iterator = items.iterator();
-        Item item = null;
-        while (iterator.hasNext()) {
-            item = iterator.next();
-            System.out.println(item.toJSONPretty());
-        }
-
+        List<PropertyMessage> items = databaseWrapper.queryTable(DEFAULT_TABLE_NAME, "2020-12-01", "2020-12-24", "Galway");
+        assertTrue(!items.isEmpty());
     }
 
     @Ignore
@@ -104,14 +99,8 @@ public class PropertyDbWrapperTest {
     @Ignore
     @Test
     public void getLastWriteTest() {
-        String date = databaseWrapper.getLastWriteDate(DEFAULT_TABLE_NAME, "Galway");
-        System.out.println("Date: " + date);
-    }
-
-    @Ignore
-    @Test
-    public void loadPropertyData() {
-        //databaseWrapper.loadPropertyData(DEFAULT_TABLE_NAME, "");
+        String date = databaseWrapper.getLastWriteDate(DEFAULT_TABLE_NAME);
+        assertEquals(date, "2020-12-06");
     }
 
 

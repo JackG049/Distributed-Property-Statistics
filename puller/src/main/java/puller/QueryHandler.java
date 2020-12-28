@@ -2,7 +2,6 @@ package puller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
-import kafka.KafkaConstants;
 import message.BatchMessage;
 import message.PropertyMessage;
 import message.RequestMessage;
@@ -12,51 +11,31 @@ import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import util.Util;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 
 @RestController
-public class MockPuller {
+public class QueryHandler {
     private KafkaProducer queryPublisher;
-    private static String DEFAULT_HOST = "kafka:9093";
 
-    @Value("${hostname}")
-    private String hostname;
-
-    public MockPuller() {
-        System.out.println("Puller Created");
+    public QueryHandler() {
         Properties props = Util.loadPropertiesFromFile("producer.properties");
         queryPublisher = new KafkaProducer(props);
-
-        /*
-        if (hostname != null)
-            System.out.println(hostname);
-        else
-            System.out.println("HOSTNAME is null");
-
-        queryPublisher = initQueryPublisher();
-
-         */
     }
 
-    public MockPuller(Properties producerProperties) {
-        System.out.println("Puller Created");
-        queryPublisher = new KafkaProducer(producerProperties);
-        System.out.println("Producer Created");
-    }
-
+    //todo return http msg
     @RequestMapping(value = "/query", method = RequestMethod.POST)
     public void query(@RequestBody RequestMessage request) {
+        // Get data needed to fulfill the query
         Query query = request.getQuery();
+        Map<String, List<PropertyMessage>> tableNameToPropertyMessageMap = Puller.getQueryData(query);
+
         PropertyMessage[] messages = new PropertyMessage[5];
         for (int i = 0; i < 5; i++) {
             messages[i] = new PropertyMessage(
@@ -65,22 +44,25 @@ public class MockPuller {
             );
         }
 
-        final BatchMessage batchMessage = new BatchMessage(request.getUuid(), request.getPartitionID(), System.currentTimeMillis(),
-                request.getQuery(), messages);
-        try {
-            sendData(KafkaConstants.REQUESTS_DAFT, batchMessage);
-        } catch (JsonProcessingException e) {
-            System.err.println("Failed to publish request");
-            e.printStackTrace();
+        for (Map.Entry<String, List<PropertyMessage>> propertyMessages : tableNameToPropertyMessageMap.entrySet()) {
+           BatchMessage batchMessage = new BatchMessage(request.getUuid(), request.getPartitionID(), System.currentTimeMillis(),
+                    request.getQuery(), propertyMessages.getValue().toArray(new PropertyMessage[0]));
+
+            try {
+                sendPropertyData("requests_" + propertyMessages.getKey(), batchMessage);
+            } catch (JsonProcessingException e) {
+                System.err.println("Failed to publish request");
+                e.printStackTrace();
+            }
         }
 
     }
 
+
     /**
      * Send data to be processed
-     * @param message
      */
-    public void sendData(final String topic, final BatchMessage message) throws JsonProcessingException {
+    public void sendPropertyData(final String topic, final BatchMessage message) throws JsonProcessingException {
         TestCallback callback = new TestCallback();
         queryPublisher.send(new ProducerRecord<>(topic, Util.objectMapper.writeValueAsString(message)), callback);
     }
@@ -99,20 +81,37 @@ public class MockPuller {
         }
     }
 
-    private KafkaProducer initQueryPublisher() {
-        Properties props = new Properties();
+    /*
+    @RequestMapping(value = "/query", method = RequestMethod.POST)
+    public void query(@RequestBody RequestMessage request) {
+        // Get data needed to fulfill the query
+        Query query = request.getQuery();
+        Map<String, List<PropertyData>> queryData = Puller.getQueryData(query);
 
-        if (StringUtils.isEmpty(hostname)) {
-            props.setProperty("bootstrap.servers", DEFAULT_HOST);
-        } else {
-            props.setProperty("bootstrap.servers", hostname);
+        PropertyMessage[] messages = new PropertyMessage[5];
+        for (int i = 0; i < 5; i++) {
+            messages[i] = new PropertyMessage(
+                    System.currentTimeMillis(), LocalDate.now(),
+                    new PropertyData(query.getCounty(), query.getPropertyType(), query.getMinPrice(), query.getPostcodePrefix(), ImmutableMap.of())
+            );
         }
-        props.setProperty("group.id", "test");
-        props.setProperty("enable.auto.commit", "true");
-        props.setProperty("auto.commit.interval.ms", "1000");
-        props.setProperty("max.message.bytes", "100000");
-        props.setProperty("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        props.setProperty("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        return new KafkaProducer(props);
+
+        final BatchMessage batchMessage = new BatchMessage(request.getUuid(), request.getPartitionID(), System.currentTimeMillis(),
+                request.getQuery(), messages);
+
+        for (Map.Entry<String, List<PropertyData>> dataSet : queryData.entrySet()) {
+            try {
+                sendPropertyData("requests_" + dataSet.getKey(), dataSet.getValue());
+            } catch (JsonProcessingException e) {
+                System.err.println("Failed to publish request");
+                e.printStackTrace();
+            }
+        }
+
     }
+
+     */
+
+
+
 }

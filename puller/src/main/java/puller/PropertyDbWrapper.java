@@ -15,6 +15,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Sets;
+import counties.County;
+import message.PropertyMessage;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,11 +24,12 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static util.DynamoDbUtil.propertyItemToPropertyMessage;
+
 public class PropertyDbWrapper {
     private AmazonDynamoDB client;
     private DynamoDB dynamoDB;
     private final String DEFAULT_ORIGIN_DATE = "2020-01-01";
-
 
     public PropertyDbWrapper() {
         this.client = AmazonDynamoDBClientBuilder.standard()
@@ -35,37 +38,41 @@ public class PropertyDbWrapper {
         this.dynamoDB = new DynamoDB(client);
     }
 
-
     public Set<String> getTableNames() {
         TableCollection<ListTablesResult> tables = dynamoDB.listTables();
         Set<Table> tableSet = Sets.newHashSet(tables.iterator());
         return tableSet.stream().map(Table::getTableName).collect(Collectors.toSet());
     }
 
-    public String getLastWriteDate(String tableName, String county) {
+    public String getLastWriteDate(String tableName) {
         Table table = dynamoDB.getTable(tableName);
         Index index = table.getIndex("ListingDateIndex");
+        LocalDate latestWriteDate = LocalDate.parse(DEFAULT_ORIGIN_DATE);
 
-        QuerySpec request = new QuerySpec()
-                .withScanIndexForward(false)
-                .withMaxResultSize(1)
-                .withKeyConditionExpression("#pk = :county")
-                .withNameMap(new NameMap().with("#pk", "County"))
-                .withValueMap(new ValueMap()
-                        .withString(":county", county));
+        for (String county : County.getCounties()) {
+            QuerySpec request = new QuerySpec()
+                    .withScanIndexForward(false)
+                    .withMaxResultSize(1)
+                    .withKeyConditionExpression("#pk = :county")
+                    .withNameMap(new NameMap().with("#pk", "County"))
+                    .withValueMap(new ValueMap()
+                            .withString(":county", county));
 
-        ItemCollection<QueryOutcome> item = index.query(request);
-        IteratorSupport<Item, QueryOutcome> itemIterator = item.iterator();
+            ItemCollection<QueryOutcome> item = index.query(request);
+            IteratorSupport<Item, QueryOutcome> itemIterator = item.iterator();
 
-        if (itemIterator.hasNext()) {
-           return itemIterator.next().getString("ListingDate");
-        } else {
-            return DEFAULT_ORIGIN_DATE;
+            if (itemIterator.hasNext()) {
+                LocalDate partitionDate = LocalDate.parse(itemIterator.next().getString("ListingDate"));
+                if (partitionDate.isAfter(latestWriteDate)) {
+                    latestWriteDate = partitionDate;
+                }
+            }
         }
+
+        return latestWriteDate.toString();
     }
 
-    //todo resolve pagenation
-    public ItemCollection<QueryOutcome> queryTable(String tableName, String periodStart, String periodEnd, String county) {
+    public List<PropertyMessage> queryTable(String tableName, String periodStart, String periodEnd, String county) {
         Table table = dynamoDB.getTable(tableName);
         Index index = table.getIndex("ListingDateIndex");
 
@@ -79,7 +86,14 @@ public class PropertyDbWrapper {
 
         ItemCollection<QueryOutcome> items = index.query(request);
 
-        return items;
+        List<PropertyMessage> propertyMessages = new ArrayList<>();
+        IteratorSupport<Item, QueryOutcome> dataIterator = items.iterator();
+        while (dataIterator.hasNext()) {
+            propertyMessages.add(
+                    propertyItemToPropertyMessage(dataIterator.next())
+            );
+        }
+        return propertyMessages;
     }
 
     public void writeData(String tableName, String listingId, String listingDate, Map<String, Object> additionalData) {
@@ -87,10 +101,8 @@ public class PropertyDbWrapper {
 
         try {
             System.out.println("Adding a new item...");
-
             Item item = buildPropertyItem(listingId, listingDate, additionalData);
             PutItemOutcome outcome = table.putItem(item);
-
             System.out.println("PutItem succeeded:\n" + outcome.getPutItemResult());
 
         }
@@ -100,25 +112,30 @@ public class PropertyDbWrapper {
         }
     }
 
+    public void writePropertyItem(String tableName, Item propertyItem) {
+        Table table = dynamoDB.getTable(tableName);
+
+        try {
+            System.out.println("Adding a new item...");
+            PutItemOutcome outcome = table.putItem(propertyItem);
+            System.out.println("PutItem succeeded:\n" + outcome.getPutItemResult());
+        }
+        catch (Exception e) {
+            System.err.println("Unable to add item");
+            System.err.println(e.getMessage());
+        }
+    }
+
+
     public void batchWriteItem(String table, List<Item> items) {
-
-        // Add a new item to Forum
         TableWriteItems batchWrites = new TableWriteItems(table).withItemsToPut(items);
-
-        System.out.println("Making the request.");
         BatchWriteItemOutcome outcome = dynamoDB.batchWriteItem(batchWrites);
 
         do {
             // Check for unprocessed keys which could happen if you exceed
             // provisioned throughput
-
             Map<String, List<WriteRequest>> unprocessedItems = outcome.getUnprocessedItems();
-
-            if (outcome.getUnprocessedItems().size() == 0) {
-                System.out.println("No unprocessed items found");
-            }
-            else {
-                System.out.println("Retrieving the unprocessed items");
+            if (!outcome.getUnprocessedItems().isEmpty()) {
                 outcome = dynamoDB.batchWriteItemUnprocessed(unprocessedItems);
             }
 
@@ -131,7 +148,6 @@ public class PropertyDbWrapper {
         Table table = dynamoDB.getTable(tableName);
         table.delete();
 
-        // Wait for table to be deleted
         System.out.println("Waiting for " + tableName + " to be deleted...");
         try {
             table.waitForDelete();
@@ -152,52 +168,6 @@ public class PropertyDbWrapper {
         }
 
         return item;
-    }
-
-    public void loadPropertyData(String tableName, String fileName) throws IOException {
-        Table table = dynamoDB.getTable(tableName);
-
-        JsonParser parser = new JsonFactory().createParser(new File(fileName));
-
-        JsonNode rootNode = new ObjectMapper().readTree(parser);
-        Iterator<JsonNode> iter = rootNode.iterator();
-
-        ObjectNode currentNode;
-
-        while (iter.hasNext()) {
-            currentNode = (ObjectNode) iter.next();
-
-            String listingId = currentNode.path("ListingId").textValue();
-            String listingDate = currentNode.path("ListingDate").textValue();
-            Map<String, Object> additionalData = new HashMap<>();
-
-            Iterator<Map.Entry<String, JsonNode>> fields = currentNode.fields();
-            while(fields.hasNext()) {
-                Map.Entry<String, JsonNode> field = fields.next();
-                String   fieldName  = field.getKey();
-                JsonNode fieldValue = field.getValue();
-
-                if (!fieldName.equals("ListingId") && !fieldName.equals("ListingDate")) {
-                    if (fieldValue.isNumber()) {
-                        additionalData.put(fieldName, fieldValue.asDouble());
-                    } else {
-                        additionalData.put(fieldName, fieldValue.asText());
-                    }
-                }
-            }
-
-
-            try {
-                table.putItem( buildPropertyItem(listingId, listingDate, additionalData));
-                System.out.println("PutItem succeeded");
-            }
-            catch (Exception e) {
-                System.err.println("Unable to add entry");
-                System.err.println(e.getMessage());
-                break;
-            }
-        }
-        parser.close();
     }
 
 
@@ -249,15 +219,5 @@ public class PropertyDbWrapper {
         }
 
     }
-
-    public boolean isLive() {
-        try {
-            getTableNames();
-        } catch (Exception e) {
-            return false;
-        }
-        return true;
-    }
-
 
 }

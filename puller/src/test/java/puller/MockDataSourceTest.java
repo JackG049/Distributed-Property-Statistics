@@ -4,8 +4,10 @@ import message.PropertyMessage;
 import org.junit.Test;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class MockDataSourceTest {
     private MockDataSource mockDataSource = new MockDataSource();
@@ -14,8 +16,11 @@ public class MockDataSourceTest {
     public void getMockListingsTest() {
         LocalDate today = LocalDate.now();
         String nowStr = today.toString();
-        PropertyMessage[] listingData = mockDataSource.getPropertyListings("daft", nowStr, nowStr);
-        assertEquals(listingData[0].getLocalDate(), LocalDate.now());
+        Map<String, PropertyMessage> listingData = mockDataSource.getPropertyListings("daft", nowStr, nowStr);
+
+        assertTrue(!listingData.isEmpty());
+        PropertyMessage propertyMessage = listingData.entrySet().iterator().next().getValue();
+        assertEquals(propertyMessage.getLocalDate(), LocalDate.now());
     }
 
 }

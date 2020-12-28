@@ -13,14 +13,14 @@ import java.util.Properties;
 import java.util.UUID;
 
 
-public class MockPullerTest {
-    private MockPuller mockPuller;
+public class QueryHandlerTest {
+    private QueryHandler queryHandler;
     private Properties props;
 
     @Before
     public void init() {
         props = Util.loadPropertiesFromFile("producer.properties");
-        mockPuller = new MockPuller(props);
+        queryHandler = new QueryHandler();
     }
 
     @Test
@@ -28,8 +28,8 @@ public class MockPullerTest {
         Query query = new Query("Galway", "house", "XXX", LocalDate.now().toString()
                 , LocalDate.now().toString(), 1000.0, 1500.0);
         RequestMessage message = new RequestMessage(UUID.randomUUID(), 0, query, LocalTime.now().toSecondOfDay());
-        assertNotNull(mockPuller);
-        mockPuller.query(message);
+        assertNotNull(queryHandler);
+        queryHandler.query(message);
     }
 
 }
