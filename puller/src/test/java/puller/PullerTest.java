@@ -21,43 +21,42 @@ import java.util.*;
 
 public class PullerTest {
     private static Puller puller;
-    private static String DEFAULT_TABLE_NAME = "daft_ie";
+    private static String DEFAULT_TABLE_NAME = "daft";
     private static PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
+    private static final long DEFAULT_NUM_ENTRIES = 5;
 
-    @Ignore
     @BeforeClass
     public static void setup() {
         puller = new Puller();
 
-        int propertyId = 0;
-
-        while (propertyId < 5) {
+        for (int i = 0; i < DEFAULT_NUM_ENTRIES; i++) {
             final Map<String, Object> infoMap = new HashMap<String, Object>();
             infoMap.put("Price", Math.random() * 1500);
             infoMap.put("County", "Galway");
 
-            databaseWrapper.writeData(DEFAULT_TABLE_NAME, "Daft_" + propertyId, "2020-12-0" + propertyId, infoMap);
-            propertyId++;
+            databaseWrapper.writeData(DEFAULT_TABLE_NAME, "daft_" + i, "2020-12-0" + (i + 1), infoMap);
         }
     }
 
-    @Ignore
     @AfterClass
     public static void tearDown() {
         databaseWrapper.deleteTable(DEFAULT_TABLE_NAME);
     }
 
 
-    @Ignore
     @Test
-    public void pullFromDatabaseTest()  {
-        Query query = new Query("Galway", null, null,
-                "2020-12-01", "2020-12-25", null, null);
+    public void getQueryDataTest()  {
+        Query query = new Query("Galway", "house", "000",
+                "2020-12-01", "2020-12-25", 500.0, 2000.0);
 
-        List<PropertyMessage> items = puller.queryDatabase(DEFAULT_TABLE_NAME, query);
-        assertTrue(!items.isEmpty());
+        Map<String, List<PropertyMessage>> result = puller.getQueryData(query);
+        assertTrue(!result.isEmpty());
     }
 
-
-
+    @Test
+    public void databasePopulationTest() throws InterruptedException {
+        Thread.sleep(7000);
+        long size = databaseWrapper.getApproxTableSize("daft");
+        assertTrue(size > DEFAULT_NUM_ENTRIES);
+    }
 }

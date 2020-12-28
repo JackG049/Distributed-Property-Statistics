@@ -1,6 +1,7 @@
 package puller;
 
 import com.amazonaws.services.dynamodbv2.document.Item;
+import com.google.common.collect.Sets;
 import message.PropertyMessage;
 import model.Query;
 import util.DynamoDbUtil;
@@ -17,14 +18,25 @@ import static util.DynamoDbUtil.propertyMessageToPropertyItem;
 public class Puller {
     private static final PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
     private static final MockDataSource mockDataSource = new MockDataSource();
-    private static final long PULL_NEW_LISTINGS_PERIOD_SECONDS = 10L;
-    private final Set<String> DEFAULT_TABLES = Set.of("daft, myhome");
+    private static final long PULL_NEW_LISTINGS_PERIOD_SECONDS = 5L;
+    private final Set<String> DEFAULT_TABLES = Set.of("daft", "myhome");
 
     private static final Set<String> tables = new HashSet<>();
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public Puller() {
-        tables.addAll(DEFAULT_TABLES);
+        tables.addAll(databaseWrapper.getTableNames());
+        Set<String> absentTables = Sets.difference(DEFAULT_TABLES, tables);
+
+        for (String tableName : absentTables) {
+            try {
+                databaseWrapper.createPropertyTable(tableName);
+                tables.add(tableName);
+            } catch (InterruptedException e) {
+                System.out.println("Failed to create table " + tableName);
+                e.printStackTrace();
+            }
+        }
 
         // Fetch client-quotation requests
         scheduler.scheduleAtFixedRate(Puller::pullNewListings, 5, PULL_NEW_LISTINGS_PERIOD_SECONDS, TimeUnit.SECONDS);
@@ -46,7 +58,7 @@ public class Puller {
      * Retrieve all relevant data from the database
      * @return
      */
-    public static List<PropertyMessage> queryDatabase(String tableName, Query query) {
+    private static List<PropertyMessage> queryDatabase(String tableName, Query query) {
         String periodStart = query.getStartDate();
         String periodEnd = query.getEndDate();
         String county = query.getCounty();
@@ -63,7 +75,7 @@ public class Puller {
         return result;
     }
 
-    public static void pullNewListings() {
+    private static void pullNewListings() {
         for (String tableName : tables) {
             String latestEntryDate = getLatestDatabaseEntry(tableName);
             Map<String, PropertyMessage> newPropertyListings = pullNewDataFromSource(tableName, latestEntryDate);

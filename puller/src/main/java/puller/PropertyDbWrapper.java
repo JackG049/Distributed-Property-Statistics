@@ -220,4 +220,20 @@ public class PropertyDbWrapper {
 
     }
 
+    public long getApproxTableSize(String tableName) {
+        long size = 0;
+        Map<String, AttributeValue> lastKeyEvaluated = null;
+        do {
+            ScanRequest scanRequest = new ScanRequest()
+                    .withTableName(tableName)
+                    .withExclusiveStartKey(lastKeyEvaluated);
+
+            ScanResult result = client.scan(scanRequest);
+            size += result.getScannedCount();
+            lastKeyEvaluated = result.getLastEvaluatedKey();
+        } while (lastKeyEvaluated != null);
+
+        return size;
+    }
+
 }

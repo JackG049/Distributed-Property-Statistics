@@ -22,7 +22,7 @@ import java.util.*;
 
 @RestController
 public class QueryHandler {
-    private KafkaProducer queryPublisher;
+    private final KafkaProducer queryPublisher;
 
     public QueryHandler() {
         Properties props = Util.loadPropertiesFromFile("producer.properties");
@@ -36,14 +36,6 @@ public class QueryHandler {
         Query query = request.getQuery();
         Map<String, List<PropertyMessage>> tableNameToPropertyMessageMap = Puller.getQueryData(query);
 
-        PropertyMessage[] messages = new PropertyMessage[5];
-        for (int i = 0; i < 5; i++) {
-            messages[i] = new PropertyMessage(
-                    System.currentTimeMillis(), LocalDate.now(),
-                    new PropertyData(query.getCounty(), query.getPropertyType(), query.getMinPrice(), query.getPostcodePrefix(), ImmutableMap.of())
-            );
-        }
-
         for (Map.Entry<String, List<PropertyMessage>> propertyMessages : tableNameToPropertyMessageMap.entrySet()) {
            BatchMessage batchMessage = new BatchMessage(request.getUuid(), request.getPartitionID(), System.currentTimeMillis(),
                     request.getQuery(), propertyMessages.getValue().toArray(new PropertyMessage[0]));
@@ -55,9 +47,7 @@ public class QueryHandler {
                 e.printStackTrace();
             }
         }
-
     }
-
 
     /**
      * Send data to be processed
