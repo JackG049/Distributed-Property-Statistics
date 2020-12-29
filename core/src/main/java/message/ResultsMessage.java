@@ -19,10 +19,10 @@ public class ResultsMessage implements Message<StatisticsResult[]> {
     private final long timestamp;
 
     @JsonCreator
-    public ResultsMessage(@JsonProperty("id") final UUID uuid,
+    public ResultsMessage(@JsonProperty("uuid") final UUID uuid,
                           @JsonProperty("partitionID") final int partitionID,
                           @JsonProperty("timestamp") final long timestamp,
-                          @JsonProperty("result") final StatisticsResult[] data) {
+                          @JsonProperty("data") final StatisticsResult[] data) {
         this.uuid = Preconditions.checkNotNull(uuid, "uuid must not be null");
         Preconditions.checkArgument(partitionID >= 0, "partitionID must be non-negative");
         this.partitionID = partitionID;

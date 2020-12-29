@@ -6,14 +6,21 @@ import partitioning.Partition;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Getter
-@AllArgsConstructor
 public final class StatisticsResult {
     /**
      * Map Partitioned based on query with inner map being the statistics for that partition
      */
     private final Map<Partition, Map<String, Double>> statistics;
 
+    @JsonCreator
+    public StatisticsResult(@JsonProperty("statistics") Map<Partition, Map<String, Double>> statistics) {
+        this.statistics = statistics;
+    }
+    
     @Override
     public boolean equals(final Object o) {
         if (!(o instanceof StatisticsResult)) {
@@ -23,4 +30,6 @@ public final class StatisticsResult {
 
         return other.getStatistics().equals(this.getStatistics());
     }
+
+    
 }

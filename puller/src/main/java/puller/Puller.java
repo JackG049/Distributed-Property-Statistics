@@ -52,7 +52,7 @@ public class Puller {
     /**
      * Main puller method. Accepts queries, pull data, sends data to processors
      */
-    //@RequestMapping(value = "/query", method = RequestMethod.POST)
+    @RequestMapping(value = "/query", method = RequestMethod.POST)
     public void query(@RequestBody Query query) { //request message todo
         List<ItemCollection<QueryOutcome>> rawQueryData = new ArrayList<>();
 

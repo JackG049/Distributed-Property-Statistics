@@ -8,6 +8,8 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import message.BatchMessage;
 import message.PropertyMessage;
+import message.ResultsMessage;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +35,8 @@ public class Util {
     private static NamedType[] getSubtypes() {
         return new NamedType[] {
                 new NamedType(BatchMessage.class, "batch"),
-                new NamedType(PropertyMessage.class, "property")
+                new NamedType(PropertyMessage.class, "property"),
+                new NamedType(ResultsMessage.class, "result")
         };
     }
 

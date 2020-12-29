@@ -48,7 +48,7 @@ public class MockPuller {
         PropertyMessage[] messages = new PropertyMessage[5];
         for (int i = 0; i < 5; i++) {
             messages[i] = new PropertyMessage(
-                    System.currentTimeMillis(), LocalDate.now(),
+                    System.currentTimeMillis(), LocalDate.now().minusMonths(i),
                     new PropertyData(query.getCounty(), query.getPropertyType(), query.getMinPrice(), query.getPostcodePrefix(), ImmutableMap.of())
             );
         }
