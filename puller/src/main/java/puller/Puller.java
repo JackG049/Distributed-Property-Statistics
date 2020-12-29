@@ -4,16 +4,19 @@ import com.amazonaws.services.dynamodbv2.document.Item;
 import com.google.common.collect.Sets;
 import message.PropertyMessage;
 import model.Query;
-import util.DynamoDbUtil;
 
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static util.DynamoDbUtil.propertyMessageToPropertyItem;
+
+/**
+ * The eponymous puller class asynchronously pulls property data from a data source and stores it in a database. It
+ * can perform basic queries on this database to return property data.
+ */
 
 public class Puller {
     private static final PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
@@ -25,6 +28,7 @@ public class Puller {
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public Puller() {
+        // Create the default tables if they don't already exist
         tables.addAll(databaseWrapper.getTableNames());
         Set<String> absentTables = Sets.difference(DEFAULT_TABLES, tables);
 
@@ -38,11 +42,16 @@ public class Puller {
             }
         }
 
-        // Fetch client-quotation requests
-        scheduler.scheduleAtFixedRate(Puller::pullNewListings, 5, PULL_NEW_LISTINGS_PERIOD_SECONDS, TimeUnit.SECONDS);
+        // Pull new property listings from a data source
+        scheduler.scheduleAtFixedRate(Puller::pullNewListings, 0, PULL_NEW_LISTINGS_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
 
+    /**
+     * Query all the property tables for relevant property data
+     * @param query to be performed
+     * @return property data for each data source table e.g daft.ie and myhomes.ie map to lists of prop data
+     */
     public static Map<String, List<PropertyMessage>> getQueryData(Query query) {
         Map<String, List<PropertyMessage>> queryData = new HashMap<>();
 
@@ -55,8 +64,9 @@ public class Puller {
 
 
     /**
-     * Retrieve all relevant data from the database
-     * @return
+     * Query a property tables for relevant property data
+     * @param query to be performed
+     * @return relevant property data from the provided table
      */
     private static List<PropertyMessage> queryDatabase(String tableName, Query query) {
         String periodStart = query.getStartDate();
@@ -75,31 +85,38 @@ public class Puller {
         return result;
     }
 
+    /**
+     * For each table (daft.ie, myhomes) check for new listings and update the database
+     */
     private static void pullNewListings() {
         for (String tableName : tables) {
             String latestEntryDate = getLatestDatabaseEntry(tableName);
             Map<String, PropertyMessage> newPropertyListings = pullNewDataFromSource(tableName, latestEntryDate);
-            storeListings(tableName, newPropertyListings);
+            if (!newPropertyListings.isEmpty()) {
+                storeListings(tableName, newPropertyListings);
+            }
         }
     }
 
     /**
-     * Get the date of the latest update to the database
+     * Find when the latest property has been added
+     * @param tableName to be searched
+     * @return the date of the latest write in YYYY-MM-DD format
      */
     private static String getLatestDatabaseEntry(String tableName) {
         return databaseWrapper.getLastWriteDate(tableName);
     }
 
     /**
-     * Check data sources for new data and pull it into
-     * @return
+     * Check data sources for new data / new property listings
+     * @return new property listings
      */
     private static Map<String, PropertyMessage> pullNewDataFromSource(String tableName, String latestEntryDate) {
         return mockDataSource.getPropertyListings(tableName, latestEntryDate, LocalDate.now().toString());
     }
 
     /**
-     * Update database with new data
+     * Update database with new data / property listings
      */
     private static void storeListings(String tableName, Map<String, PropertyMessage> propertyMessages) {
         List<Item> propertyItems = new ArrayList<>(propertyMessages.size());
@@ -110,27 +127,6 @@ public class Puller {
         });
 
         databaseWrapper.batchWriteItem(tableName, propertyItems);
-        /*
-        for (PropertyMessage propertyMessage : propertyMessages) {
-            databaseWrapper.writePropertyItem(tableName, propertyMessageToPropertyItem(propertyMessage));
-        }
-         */
     }
-
-    /*
-          Set<String> databaseTables = databaseWrapper.getTableNames();
-        Set<String> absentTables = Sets.difference(DEFAULT_TABLES, databaseTables);
-
-        for (String absentTable : absentTables) {
-            try {
-                databaseWrapper.createPropertyTable(absentTable);
-                tables.add(absentTable);
-            } catch (InterruptedException e) {
-                System.out.println("Failed to create table " + absentTable);
-                e.printStackTrace();
-            }
-        }
-     */
-
 
 }

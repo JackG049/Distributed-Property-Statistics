@@ -1,24 +1,30 @@
 package puller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.collect.ImmutableMap;
 import message.BatchMessage;
 import message.PropertyMessage;
 import message.RequestMessage;
-import model.PropertyData;
 import model.Query;
+
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import util.Util;
 
-import java.time.LocalDate;
 import java.util.*;
+
+/**
+ * QueryHandler is the main class in the puller package -- all data must ingress and egress through this class. This class accepts REST query requests from the client;
+ * it retrieves data that is relevant to the query from a database of historical property information; and it publishes
+ * the query and the query data to Kafka so that it can be processed.
+ */
 
 @RestController
 public class QueryHandler {
@@ -29,13 +35,18 @@ public class QueryHandler {
         queryPublisher = new KafkaProducer(props);
     }
 
-    //todo return http msg
+    /**
+     * Accepts query requests via REST. It collects data relevant to the query and sends it.
+     * @param request which contains a query and meta data
+     * @return
+     */
     @RequestMapping(value = "/query", method = RequestMethod.POST)
-    public void query(@RequestBody RequestMessage request) {
+    public ResponseEntity<String> query(@RequestBody RequestMessage request) {
         // Get data needed to fulfill the query
         Query query = request.getQuery();
         Map<String, List<PropertyMessage>> tableNameToPropertyMessageMap = Puller.getQueryData(query);
 
+        // Package and send each query and its relevant data
         for (Map.Entry<String, List<PropertyMessage>> propertyMessages : tableNameToPropertyMessageMap.entrySet()) {
            BatchMessage batchMessage = new BatchMessage(request.getUuid(), request.getPartitionID(), System.currentTimeMillis(),
                     request.getQuery(), propertyMessages.getValue().toArray(new PropertyMessage[0]));
@@ -47,10 +58,15 @@ public class QueryHandler {
                 e.printStackTrace();
             }
         }
+
+        return new ResponseEntity<>("Query Acknowledged.", HttpStatus.OK);
     }
 
     /**
-     * Send data to be processed
+     * Publishes property queries and related data to Kafka so it can be processed.
+     * @param topic is the kafka topic where the message will be sent
+     * @param message contains a property query and related data
+     * @throws JsonProcessingException
      */
     public void sendPropertyData(final String topic, final BatchMessage message) throws JsonProcessingException {
         TestCallback callback = new TestCallback();
@@ -97,11 +113,7 @@ public class QueryHandler {
                 e.printStackTrace();
             }
         }
-
     }
-
      */
-
-
 
 }
