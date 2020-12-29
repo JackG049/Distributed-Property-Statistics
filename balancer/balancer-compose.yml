@@ -1,0 +1,6 @@
+version: '3'
+services:
+  balancer_alpha:
+    image: balancer:latest
+    ports:
+      - '8081:8081'

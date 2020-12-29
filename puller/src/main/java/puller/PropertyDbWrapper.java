@@ -33,7 +33,7 @@ public class PropertyDbWrapper {
 
     public PropertyDbWrapper() {
         this.client = AmazonDynamoDBClientBuilder.standard()
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://127.0.0.1:8000", "eu-west-2"))
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://192.168.99.101:8000", "eu-west-2"))
                 .build();
         this.dynamoDB = new DynamoDB(client);
     }
