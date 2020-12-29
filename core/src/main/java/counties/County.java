@@ -6,7 +6,8 @@ import lombok.Getter;
 
 @Getter
 public class County {
-    private List<String> counties = List.of("Antrim",
+    @Getter
+    private static List<String> counties = List.of("Antrim",
         "Armagh",
         "Carlow",
         "Cavan",

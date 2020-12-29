@@ -1,117 +1,84 @@
 package puller;
 
-import com.amazonaws.SdkClientException;
 import com.amazonaws.services.dynamodbv2.document.Item;
-import com.amazonaws.services.dynamodbv2.document.ItemCollection;
-import com.amazonaws.services.dynamodbv2.document.QueryOutcome;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import message.PropertyMessage;
+import model.Query;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.assertTrue;
 
 public class PropertyDbWrapperTest {
     private final static PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
-    private static boolean isDatabaseRunning = false;
-    private static Set<String> tables = new HashSet();
-    private static String DEFAULT_TABLE_NAME = "daft_ie";
-    private static boolean hitIf = false;
+    private static String DEFAULT_TABLE_NAME = "daft";
+    private static Set<String> tables = Set.of(DEFAULT_TABLE_NAME);
 
-    @Ignore
     @BeforeClass
-    public static void setup() {
+    public static void setup() throws InterruptedException {
+        databaseWrapper.createPropertyTable(DEFAULT_TABLE_NAME);
 
-        try {
-            if (databaseWrapper.getTableNames().isEmpty()) {
-                System.out.println(tables);
-                databaseWrapper.createPropertyTable(DEFAULT_TABLE_NAME);
+        for (int i = 0; i < 4; i++) {
+            final Map<String, Object> infoMap = new HashMap<String, Object>();
+            infoMap.put("Price", Math.random() * 1500);
+            infoMap.put("County", "Galway");
 
-            }
-            tables.addAll(databaseWrapper.getTableNames());
-
-            for (String table : tables) {
-                System.out.println("Table " + table);
-            }
-            isDatabaseRunning = true;
-
-
-            int propertyId = 0;
-
-            while (propertyId < 5) {
-                final Map<String, Object> infoMap = new HashMap<String, Object>();
-                infoMap.put("Price", Math.random()*1500);
-                infoMap.put("County", "Galway");
-
-                databaseWrapper.writeData(DEFAULT_TABLE_NAME, "Daft_" + propertyId, "2020-12-0" + (propertyId+1), infoMap);
-                propertyId++;
-            }
-
-
-        } catch (SdkClientException e) {
-            System.out.println("The database is not running. Aborting further tests. " + e);
-        } catch (InterruptedException e) {
-            System.out.println("Initial table creation interupted. Aborting further tests. " + e);
+            databaseWrapper.writeData(DEFAULT_TABLE_NAME, "Daft_" + i, "2020-12-0" + (i + 1), infoMap);
         }
+
+        final Map<String, Object> infoMap = new HashMap<String, Object>();
+        infoMap.put("Price", 2000);
+        infoMap.put("County", "Galway");
+        infoMap.put("PropertyType", "house");
+        databaseWrapper.writeData(DEFAULT_TABLE_NAME, "Daft_" + 4, "2020-12-0" + 5, infoMap);
     }
 
-    @Ignore
     @AfterClass
     public static void tearDown() {
         databaseWrapper.deleteTable(DEFAULT_TABLE_NAME);
     }
 
-    @Ignore
-    @Test
-    public void getTableNamesTest()  {
-        assumeTrue(isDatabaseRunning);
-        Set<String> tableNames = databaseWrapper.getTableNames();
-        assertEquals(tableNames, tables);
-    }
-
-    @Ignore
     @Test
     public void queryTableTest()  {
-        assumeTrue(isDatabaseRunning);
-        ItemCollection<QueryOutcome> items = databaseWrapper.queryTable(DEFAULT_TABLE_NAME, "2020-12-01", "2020-12-24", "Galway");
-
-        Iterator<Item> iterator = items.iterator();
-        Item item = null;
-        while (iterator.hasNext()) {
-            item = iterator.next();
-            System.out.println(item.toJSONPretty());
-        }
-
+        List<PropertyMessage> items = databaseWrapper.queryTable(DEFAULT_TABLE_NAME, "2020-12-01", "2020-12-24", "Galway");
+        assertTrue(!items.isEmpty());
     }
 
-    @Ignore
+    @Test
+    public void priceQueryTableTest() {
+        Query query = new Query("Galway", "house", "000",
+                "2020-12-01", "2020-12-25", 2000.0, 2000.0);
+        List<PropertyMessage> items = databaseWrapper.queryTable(DEFAULT_TABLE_NAME, query);
+        assertEquals(1, items.size());
+
+        Query queryApartment = new Query("Galway", "apartment", "000",
+                "2020-12-01", "2020-12-25", 2000.0, 2000.0);
+        List<PropertyMessage> apartmentItems = databaseWrapper.queryTable(DEFAULT_TABLE_NAME, queryApartment);
+        assertEquals(0, apartmentItems.size());
+    }
+
     @Test
     public void batchWriteTest() {
-        Map<String, Object> propertyData = ImmutableMap.of("Price", 500, "County", "Galway");
+        Map<String, Object> propertyData = ImmutableMap.of("Price", 500, "County", "OldMen");
         List<Item> items = Lists.newArrayList(
-                databaseWrapper.buildPropertyItem("Daft_2", "2020-12-06", propertyData),
-                databaseWrapper.buildPropertyItem("Daft_3", "2020-12-06", propertyData));
+                databaseWrapper.buildPropertyItem("test_1", "2020-12-01", propertyData),
+                databaseWrapper.buildPropertyItem("test_2", "2020-12-01", propertyData));
 
         databaseWrapper.batchWriteItem(DEFAULT_TABLE_NAME, items);
+
+        List<PropertyMessage> result = databaseWrapper.queryTable(DEFAULT_TABLE_NAME, "2020-12-01", "2020-12-01", "OldMen");
+        assertEquals(2, result.size());
     }
 
-
-    @Ignore
     @Test
     public void getLastWriteTest() {
-        String date = databaseWrapper.getLastWriteDate(DEFAULT_TABLE_NAME, "Galway");
-        System.out.println("Date: " + date);
-    }
-
-    @Ignore
-    @Test
-    public void loadPropertyData() {
-        //databaseWrapper.loadPropertyData(DEFAULT_TABLE_NAME, "");
+        String date = databaseWrapper.getLastWriteDate(DEFAULT_TABLE_NAME);
+        assertEquals( "2020-12-05", date);
     }
 
 
