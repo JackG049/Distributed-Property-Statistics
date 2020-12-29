@@ -1,21 +1,13 @@
 package puller;
 
-import com.amazonaws.services.dynamodbv2.document.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.collect.ImmutableMap;
-import kafka.KafkaConstants;
-import message.BatchMessage;
+
 import message.PropertyMessage;
-import model.PropertyData;
 import model.Query;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 import java.util.*;
 
 
