@@ -32,7 +32,7 @@ public class ResultsHandler implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsHandler.class);
 
     private final MessageDeserializer deserializer;
-    private final Consumer<String, String> consumer;
+    private final Consumer<UUID, String> consumer;
     private int partitionId;
 
     public ResultsHandler(final Properties consumerProperties, final MessageDeserializer deserializer) {
@@ -59,15 +59,17 @@ public class ResultsHandler implements Runnable {
     public void run() {
         try {
             while (true) {
-                final ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
+                LOGGER.debug("polling...");
+                final ConsumerRecords<UUID, String> records = consumer.poll(Duration.ofMillis(1000));
                 if (!records.isEmpty()) {
                     LOGGER.info("Records consumed from kafka");
                 }
-                for (ConsumerRecord<String, String> record : records) {
+                for (ConsumerRecord<UUID, String> record : records) {
                     final Message<StatisticsResult[]> message = deserializer.deserialize(record.value());
-                    final int partitionID = ((ResultsMessage) message).getPartitionID();
-                    final StatisticsResult[] data =  ((ResultsMessage) message).getData();
-                    final UUID uuid = ((ResultsMessage) message).getUuid();
+                    final ResultsMessage resultsMessage = (ResultsMessage) message;
+                    final int partitionID = resultsMessage.getPartitionID();
+                    final StatisticsResult[] data =  resultsMessage.getData();
+                    final UUID uuid = resultsMessage.getUuid();
                     map.put(Pair.of(uuid, partitionID), data);
                 }
                 try {

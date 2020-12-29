@@ -2,33 +2,56 @@
   <head>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script th:inline="javascript">
-        var title = /*[[${title}]]*/ "Results";
-        var mean = /*[[${daftMap.get('12-12-12')}]]*/ "test";
+      /*<![CDATA[*/
+      var cols = ['Year','Mean','Median','Variance','Stddev'];
+      var row = [];
+      var dates = /*[[${dates}]]*/ "";
+      var mean = /*[[${mean}]]*/ "";
+      var median = /*[[${median}]]*/ "";
+      var variance = /*[[${variance}]]*/ "";
+      var stddev = /*[[${stddev}]]*/ "";
 
-        google.charts.load('current', {'packages':['corechart']});
-        google.charts.setOnLoadCallback(drawChart);
+      console.log(dates);
+      console.log(mean);
+      console.log(median);
+      console.log(variance);
+      console.log(stddev);
 
-        function drawChart() {
-            var data = new google.visualization.DataTable();
-            data.addColumn(mean, mean);
-            data.addColumn(mean, mean);
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
 
-            data.addRows([
-              ['2004',  '1000'],
-              ['2005',  '1170'],
-              ['2006',  '660'],
-              ['2007',  '1030']
-            ]);
+      function drawChart() {
 
-            var options = {
-              title: title,
-              curveType: 'function',
-              legend: { position: 'bottom' }
-            };
-            var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+        var data = new google.visualization.DataTable();
 
-            chart.draw(data, options);
+        data.addColumn('string',cols[0]);
+        data.addColumn('number',cols[1]);
+        data.addColumn('number',cols[2]);
+        data.addColumn('number',cols[3]);
+        data.addColumn('number',cols[4]);
+
+        console.log(data);
+
+        for(i = 0;i<dates.length;i++) {
+          data.addRows([
+            [dates[i],mean[i],median[i],variance[i],stddev[i]]
+          ])
+        }
+
+        console.log(row);
+        data.addRows(row);
+
+        console.log(data);
+        var options = {
+          title: 'Housing Results',
+          curveType: 'function',
+          legend: { position: 'bottom' }
+        };
+        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+        chart.draw(data, options);
       }
+      /*]]>*/
     </script>
   </head>
   <body>

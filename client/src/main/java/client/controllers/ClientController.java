@@ -1,15 +1,12 @@
 package client.controllers;
 
 import java.time.Instant;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-
-import com.mysql.cj.x.protobuf.MysqlxDatatypes.Array;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Controller;
@@ -23,11 +20,9 @@ import message.RequestMessage;
 import model.Query;
 import model.StatisticsResult;
 import partitioning.Partition;
-import rest.UrlConstants;
 import results.ResultsHandler;
 import util.Util;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,14 +31,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 @Controller
 public class ClientController {
 
-    private Map<String, Map<String, Double>> daftMap = new HashMap<>();
-    private Map<String, Map<String, Double>> myhomeMap = new HashMap<>();
+    private List<String> dates = new ArrayList<>();
+    private List<Double> median = new ArrayList<>();
+    private List<Double> variance = new ArrayList<>();
+    private List<Double> mean = new ArrayList<>();
+    private List<Double> stddev = new ArrayList<>();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientController.class);
     private static final MessageDeserializer deserializer = new MessageDeserializer(Util.objectMapper);
     private UUID uuid;
     private static final Properties props;
-    private ArrayList<String> dates = new ArrayList<>();
     
     static {
         props = Util.loadPropertiesFromFile("consumer.properties");
@@ -52,7 +49,6 @@ public class ClientController {
 
     private final ResultsHandler resultsHandler = new ResultsHandler(props, deserializer);
     private final int partitionId = resultsHandler.getPartitionId();
-
 
     @GetMapping("/")
     public String home(Model model) {
@@ -67,43 +63,70 @@ public class ClientController {
             Model model) throws InterruptedException {
         model.addAttribute("Heading", "Home");
         RestTemplate restTemplate = new RestTemplate();
-        Query query = new Query(county, type, "test", sDate, eDate, Double.parseDouble(minPrice),
+        Query query = new Query(county, type, "000", sDate, eDate, Double.parseDouble(minPrice),
                 Double.parseDouble(maxPrice));
+        System.out.println(county + type + sDate + eDate + minPrice + maxPrice);
         uuid = UUID.randomUUID();
         RequestMessage requestMessage = new RequestMessage(uuid, partitionId, query,
                 Instant.EPOCH.toEpochMilli());
         HttpEntity<RequestMessage> request = new HttpEntity<>(requestMessage);
-        restTemplate.postForObject(UrlConstants.BALANCER + "/client", request, RequestMessage.class);
+        startThread(resultsHandler);
+        restTemplate.postForObject("http://localhost:8081" + "/client", request, RequestMessage.class);
         
-        daftMap.clear();
-        myhomeMap.clear();
-
         int count = 0;
         int lim = 2;
         while(count != lim) {
 
-            if(resultsHandler.isEmpty(uuid))
+            if(resultsHandler.isEmpty(uuid)) {
+                System.out.println("empty");
                 Thread.sleep(200);
+            }
             else {
+                System.out.println("not Empty");
+
                 StatisticsResult[] results = resultsHandler.getResult(uuid);
 
                 for(StatisticsResult result : results) {
+                    System.out.println(result.getStatistics().toString());
                     for(Partition partition : result.getStatistics().keySet()) {
-                        if(count == 0)
-                            daftMap.put(parsePartition(partition), result.getStatistics().get(partition));
-                        else 
-                            myhomeMap.put(parsePartition(partition), result.getStatistics().get(partition));
+                        if(count == 0) {
+                            dates.add(parsePartition(partition));
+                            Map<String,Double> temp = result.getStatistics().get(partition);
+                            mean.add(temp.get("mean"));
+                            median.add(temp.get("median"));
+                            variance.add(temp.get("variance"));
+                            stddev.add(temp.get("stddev"));
+                        } else { 
+                            //myhomeMap.put(parsePartition(partition), result.getStatistics().get(partition));
+                        }
                     }
                     count++;
                 }
             }
         }
+
+        model.addAttribute("dates", dates);
+        model.addAttribute("mean", mean);
+        model.addAttribute("median", median);
+        model.addAttribute("variance", variance);
+        model.addAttribute("stddev", stddev);
+        
         return "display.html";
     }
 
+    /**
+     * Return 
+     */
     private String parsePartition(Partition partition) {
-        String res = partition.getValue();
-        res = res.split("_")[1];
-        return res;
+        String result = partition.getValue();
+        int datePosition = result.lastIndexOf("_")-5;
+        result = result.substring(datePosition+1).replaceAll("_", "-");
+        return result;
+    }
+
+    private void startThread(ResultsHandler consumer) {
+        Thread consumerThread = new Thread(consumer);
+        LOGGER.info("Starting Consumer");
+        consumerThread.start();
     }
 }

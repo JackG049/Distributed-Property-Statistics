@@ -16,10 +16,12 @@
                         <label for="county">County:</label>
                     </div>
                     <div class="col-lg-10">
-                        <select name="cars" id="cars">
-                            <tr th:each="county : ${counties}">
-                                <td><option value="${county}"><span th:text="${county}"></span></td>
-                            </tr>
+                        <select name="county" id="county">
+                            <option th:each="county : ${counties}"
+                                th:value="${county}"
+                                th:text="${county}"
+                                th:selected="${county}">
+                            </option>
                         </select>
                     </div>
                 </div>
@@ -28,16 +30,15 @@
                         <label for="type">Property Type:</label>
                     </div>
                     <div class="col-lg-10">
-                        <select name="cars" id="cars">
-                            <option value="Test">Test</option>
-                            <option value="Test">Test</option>
-                            <option value="Test">Test</option>
-                          </select>
+                        <select name="type" id="type">
+                            <option value="house">house</option>
+                            <option value="apartment">apartment</option>
+                        </select>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-lg-2">
-                        <label for="sDate">Start Date: (DD-MM-YYYY)</label>
+                        <label for="sDate">Start Date: (YYYY-MM-DD)</label>
                     </div>
                     <div class="col-lg-10">
                         <input name="sDate" id="sDate">
@@ -45,7 +46,7 @@
                 </div> 
                 <div class="row">
                     <div class="col-lg-2">
-                        <label for="eDate">End Date: (DD-MM-YYYY)</label>
+                        <label for="eDate">End Date: (YYYY-MM-DD)</label>
                     </div>
                     <div class="col-lg-10">
                         <input name="eDate" id="eDate">
