@@ -71,18 +71,18 @@ public class ClientController {
                 Instant.EPOCH.toEpochMilli());
         HttpEntity<RequestMessage> request = new HttpEntity<>(requestMessage);
         startThread(resultsHandler);
-        restTemplate.postForObject("http://localhost:8081" + "/client", request, RequestMessage.class);
+        restTemplate.postForObject("http://192.168.99.101:8081" + "/client", request, RequestMessage.class);
         
         int count = 0;
         int lim = 2;
         while(count != lim) {
 
             if(resultsHandler.isEmpty(uuid)) {
-                System.out.println("empty");
-                Thread.sleep(200);
+                LOGGER.info("Empty Results...Polling");
+                Thread.sleep(500);
             }
             else {
-                System.out.println("not Empty");
+                LOGGER.info("Results Found");
 
                 StatisticsResult[] results = resultsHandler.getResult(uuid);
 

@@ -11,10 +11,15 @@ import rest.UrlConstants;
 
 import java.util.LinkedList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @RestController
 public class BalancerService {
     private int offset = 0;
     private LinkedList<RequestMessage> messageList = new LinkedList<RequestMessage>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(BalancerService.class);
+
 
     @PostMapping("/client")
     public void addGateway(@RequestBody RequestMessage message) {
@@ -25,12 +30,14 @@ public class BalancerService {
 
     //Send requests in round robin
     private void loadBalancer(RequestMessage message) {
+        LOGGER.info("Request Recieved...");
         RestTemplate restTemplate = new RestTemplate();
         HttpEntity<RequestMessage> request = new HttpEntity<>(message);
         restTemplate.postForObject(brokerPort(), request, RequestMessage.class);
+        LOGGER.info("Sending to Puller");
     }
 
     private String brokerPort() {
-        return "http://localhost:8082/query";// + (8082/query%UrlConstants.PullerInstances);
+        return "http://192.168.99.101:8082/query";// + (8082/query%UrlConstants.PullerInstances);
     }
 }

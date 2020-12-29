@@ -73,7 +73,6 @@ public class QueryHandler {
         queryPublisher.send(new ProducerRecord<>(topic, Util.objectMapper.writeValueAsString(message)), callback);
     }
 
-
     private static class TestCallback implements Callback {
         @Override
         public void onCompletion(RecordMetadata recordMetadata, Exception e) {
@@ -86,34 +85,5 @@ public class QueryHandler {
             }
         }
     }
-
-    /*
-    @RequestMapping(value = "/query", method = RequestMethod.POST)
-    public void query(@RequestBody RequestMessage request) {
-        // Get data needed to fulfill the query
-        Query query = request.getQuery();
-        Map<String, List<PropertyData>> queryData = Puller.getQueryData(query);
-
-        PropertyMessage[] messages = new PropertyMessage[5];
-        for (int i = 0; i < 5; i++) {
-            messages[i] = new PropertyMessage(
-                    System.currentTimeMillis(), LocalDate.now(),
-                    new PropertyData(query.getCounty(), query.getPropertyType(), query.getMinPrice(), query.getPostcodePrefix(), ImmutableMap.of())
-            );
-        }
-
-        final BatchMessage batchMessage = new BatchMessage(request.getUuid(), request.getPartitionID(), System.currentTimeMillis(),
-                request.getQuery(), messages);
-
-        for (Map.Entry<String, List<PropertyData>> dataSet : queryData.entrySet()) {
-            try {
-                sendPropertyData("requests_" + dataSet.getKey(), dataSet.getValue());
-            } catch (JsonProcessingException e) {
-                System.err.println("Failed to publish request");
-                e.printStackTrace();
-            }
-        }
-    }
-     */
 
 }
