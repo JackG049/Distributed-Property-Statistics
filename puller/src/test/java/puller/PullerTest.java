@@ -33,6 +33,7 @@ public class PullerTest {
             final Map<String, Object> infoMap = new HashMap<String, Object>();
             infoMap.put("Price", Math.random() * 1500);
             infoMap.put("County", "Galway");
+            infoMap.put("PropertyType", "house");
 
             databaseWrapper.writeData(DEFAULT_TABLE_NAME, "daft_" + i, "2020-12-0" + (i + 1), infoMap);
         }
@@ -42,7 +43,6 @@ public class PullerTest {
     public static void tearDown() {
         databaseWrapper.deleteTable(DEFAULT_TABLE_NAME);
     }
-
 
     @Test
     public void getQueryDataTest()  {

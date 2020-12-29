@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.document.Item;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import message.PropertyMessage;
+import model.Query;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -22,13 +23,19 @@ public class PropertyDbWrapperTest {
     public static void setup() throws InterruptedException {
         databaseWrapper.createPropertyTable(DEFAULT_TABLE_NAME);
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 4; i++) {
             final Map<String, Object> infoMap = new HashMap<String, Object>();
             infoMap.put("Price", Math.random() * 1500);
             infoMap.put("County", "Galway");
 
             databaseWrapper.writeData(DEFAULT_TABLE_NAME, "Daft_" + i, "2020-12-0" + (i + 1), infoMap);
         }
+
+        final Map<String, Object> infoMap = new HashMap<String, Object>();
+        infoMap.put("Price", 2000);
+        infoMap.put("County", "Galway");
+        infoMap.put("PropertyType", "house");
+        databaseWrapper.writeData(DEFAULT_TABLE_NAME, "Daft_" + 4, "2020-12-0" + 5, infoMap);
     }
 
     @AfterClass
@@ -40,6 +47,19 @@ public class PropertyDbWrapperTest {
     public void queryTableTest()  {
         List<PropertyMessage> items = databaseWrapper.queryTable(DEFAULT_TABLE_NAME, "2020-12-01", "2020-12-24", "Galway");
         assertTrue(!items.isEmpty());
+    }
+
+    @Test
+    public void priceQueryTableTest() {
+        Query query = new Query("Galway", "house", "000",
+                "2020-12-01", "2020-12-25", 2000.0, 2000.0);
+        List<PropertyMessage> items = databaseWrapper.queryTable(DEFAULT_TABLE_NAME, query);
+        assertEquals(1, items.size());
+
+        Query queryApartment = new Query("Galway", "apartment", "000",
+                "2020-12-01", "2020-12-25", 2000.0, 2000.0);
+        List<PropertyMessage> apartmentItems = databaseWrapper.queryTable(DEFAULT_TABLE_NAME, queryApartment);
+        assertEquals(0, apartmentItems.size());
     }
 
     @Test

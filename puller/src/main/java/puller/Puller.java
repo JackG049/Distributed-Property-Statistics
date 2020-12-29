@@ -69,19 +69,8 @@ public class Puller {
      * @return relevant property data from the provided table
      */
     private static List<PropertyMessage> queryDatabase(String tableName, Query query) {
-        String periodStart = query.getStartDate();
-        String periodEnd = query.getEndDate();
-        String county = query.getCounty();
-
-
         List<PropertyMessage> result;
-        if (query.getMinPrice() != null && query.getMaxPrice() != null) {
-            // todo add price range query
-            result = databaseWrapper.queryTable(tableName, periodStart, periodEnd, county);
-        } else {
-            result = databaseWrapper.queryTable(tableName, periodStart, periodEnd, county);
-        }
-
+        result = databaseWrapper.queryTable(tableName, query);
         return result;
     }
 

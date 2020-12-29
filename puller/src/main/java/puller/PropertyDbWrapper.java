@@ -13,6 +13,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import counties.County;
 import message.PropertyMessage;
+import model.Query;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -107,6 +108,43 @@ public class PropertyDbWrapper {
         }
         return propertyMessages;
     }
+
+    /**
+     * Perform a simple query which returns all entries in a range matching a county
+     * @param tableName to query
+     * @param query to be performed
+     * @return
+     */
+    public List<PropertyMessage> queryTable(String tableName, Query query) {
+        Table table = dynamoDB.getTable(tableName);
+        Index index = table.getIndex("ListingDateIndex");
+
+        QuerySpec request = new QuerySpec()
+                .withKeyConditionExpression("#pk = :county and #sk between :start and :end")
+                .withFilterExpression("#type = :propertytype and #price between :min and :max")
+                .withNameMap(new NameMap().with("#pk", "County").with("#sk", "ListingDate")
+                        .with("#price", "Price").with("#type", "PropertyType"))
+                .withValueMap(new ValueMap()
+                        .withString(":county", query.getCounty())
+                        .withString(":start", query.getStartDate())
+                        .withString(":end", query.getEndDate())
+                        .withString(":propertytype", query.getPropertyType())
+                        .withNumber(":min", query.getMinPrice())
+                        .withNumber(":max", query.getMaxPrice()));
+
+
+        ItemCollection<QueryOutcome> items = index.query(request);
+
+        List<PropertyMessage> propertyMessages = new ArrayList<>();
+        IteratorSupport<Item, QueryOutcome> dataIterator = items.iterator();
+        while (dataIterator.hasNext()) {
+            propertyMessages.add(
+                    propertyItemToPropertyMessage(dataIterator.next())
+            );
+        }
+        return propertyMessages;
+    }
+
 
     /**
      * Batch write property data to the database
