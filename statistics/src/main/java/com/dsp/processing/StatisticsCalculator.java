@@ -9,6 +9,7 @@ import partitioning.Partitioner;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -34,7 +35,8 @@ public class StatisticsCalculator {
      * @return A {@link model.StatisticsResult} containing the statistics for the partitioned data.
      */
     public StatisticsResult calculateStatistics(final Partition globalPartition, final List<PropertyMessage> messages) {
-        final Map<Partition, List<PropertyMessage>> bucketedMessages = new HashMap<>();
+        messages.sort(Comparator.comparing(PropertyMessage::getLocalDate));
+        final Map<Partition, List<PropertyMessage>> bucketedMessages = new LinkedHashMap<>();
 
         // partition based on localdate ({year}_{month})
         messages.forEach(message -> {
@@ -47,7 +49,7 @@ public class StatisticsCalculator {
 
         // Final results map with keys in the format of {prev_partitioning}_{year}_{month},
         // e.g {county}_{type}_{year}_{month}
-        final Map<Partition, Map<String, Double>> results = new HashMap<>();
+        final Map<Partition, Map<String, Double>> results = new LinkedHashMap<>();
         for (final Map.Entry<Partition, List<PropertyMessage>> entry : bucketedMessages.entrySet()) {
             final Map<String, Double> statisticsResults = new HashMap<>();
             final OnlineStatistics onlineStatistics = new OnlineStatistics();
