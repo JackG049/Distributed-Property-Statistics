@@ -24,7 +24,8 @@ import java.util.stream.Collectors;
  * MockDataSource mocks a remote property database. It generates sample property listings.
  */
 public class MockDataSource {
-    private final int MAX_RETURNED_LISTINGS = 2;
+    private final int MAX_PULLED_LISTINGS = 2;
+    private final int MAX_TEST_LISTINGS = 50;
     private AtomicLong listingId = new AtomicLong(0L);
     private static final String[] PROPERTY_TYPE = {"house", "apartment"};
 
@@ -41,7 +42,7 @@ public class MockDataSource {
         final List<LocalDate> dates = getDatesBetween(startDate, endDate);
         List<PropertyData> samplePropertyData;
         try {
-            samplePropertyData = generatePropertyData(MAX_RETURNED_LISTINGS, query);
+            samplePropertyData = generatePropertyData(MAX_TEST_LISTINGS, query);
         } catch (IOException e) {
             System.err.println("Failed to generate property data");
             e.printStackTrace();
@@ -64,7 +65,7 @@ public class MockDataSource {
         final List<LocalDate> dates = getDatesBetween(startDate, endDate);
         List<PropertyData> samplePropertyData;
         try {
-            samplePropertyData = generateGeneralPropertyData(MAX_RETURNED_LISTINGS);
+            samplePropertyData = generateGeneralPropertyData(MAX_PULLED_LISTINGS);
         } catch (IOException e) {
             System.err.println("Failed to generate property data");
             e.printStackTrace();

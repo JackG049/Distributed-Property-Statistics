@@ -28,7 +28,7 @@ import static util.DynamoDbUtil.propertyItemToPropertyMessage;
 public class PropertyDbWrapper {
     private AmazonDynamoDB client;
     private DynamoDB dynamoDB;
-    private final String DEFAULT_ORIGIN_DATE = "2020-12-25";
+    private final String DEFAULT_ORIGIN_DATE = "2020-12-10";
     private final int MAX_DYNAMO_BATCH_SIZE = 25;
 
     public PropertyDbWrapper() {
@@ -116,6 +116,36 @@ public class PropertyDbWrapper {
      * @return
      */
     public List<PropertyMessage> queryTable(String tableName, Query query) {
+        Table table = dynamoDB.getTable(tableName);
+        Index index = table.getIndex("ListingDateIndex");
+
+        QuerySpec request = new QuerySpec()
+                .withKeyConditionExpression("#pk = :county and #sk between :start and :end")
+                .withFilterExpression("#type = :propertytype and #price between :min and :max")
+                .withNameMap(new NameMap().with("#pk", "County").with("#sk", "ListingDate")
+                        .with("#price", "Price").with("#type", "ListingType"))
+                .withValueMap(new ValueMap()
+                        .withString(":county", query.getCounty())
+                        .withNumber(":min", query.getMinPrice())
+                        .withNumber(":max", query.getMaxPrice())
+                        .withString(":propertytype", query.getPropertyType())
+                        .withString(":start", query.getStartDate())
+                        .withString(":end", query.getEndDate()));
+
+
+        ItemCollection<QueryOutcome> items = index.query(request);
+
+        List<PropertyMessage> propertyMessages = new ArrayList<>();
+        IteratorSupport<Item, QueryOutcome> dataIterator = items.iterator();
+        while (dataIterator.hasNext()) {
+            propertyMessages.add(
+                    propertyItemToPropertyMessage(dataIterator.next())
+            );
+        }
+        return propertyMessages;
+    }
+
+    public List<PropertyMessage> queryTableOld(String tableName, Query query) {
         Table table = dynamoDB.getTable(tableName);
         Index index = table.getIndex("ListingDateIndex");
 

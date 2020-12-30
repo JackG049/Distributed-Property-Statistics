@@ -26,7 +26,7 @@ import java.util.*;
  * the query and the query data to Kafka so that it can be processed.
  */
 
-//@RestController
+@RestController
 public class QueryHandler {
     private final KafkaProducer queryPublisher;
     private static final Puller puller = new Puller();
@@ -41,7 +41,7 @@ public class QueryHandler {
      * @param request which contains a query and meta data
      * @return
      */
-    //@RequestMapping(value = "/query", method = RequestMethod.POST)
+    @RequestMapping(value = "/query", method = RequestMethod.POST)
     public void query(@RequestBody RequestMessage request) {
         System.out.println("Message Received");
         // Get data needed to fulfill the query
@@ -71,6 +71,7 @@ public class QueryHandler {
     Map<String, List<PropertyMessage>> mockData(Query query) {
         MockDataSource mockDataSource = new MockDataSource();
         Map<String, PropertyMessage> data = mockDataSource.getPropertyListings("daft", query);
+        System.out.println("Mock data size" + data.keySet().size());
 
         Map<String, List<PropertyMessage>> result = new HashMap<>();
         result.put("daft", new ArrayList<PropertyMessage>(data.values()));

@@ -21,7 +21,7 @@ import static util.DynamoDbUtil.propertyMessageToPropertyItem;
 public class Puller {
     private static final PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
     private static final MockDataSource mockDataSource = new MockDataSource();
-    private static final long PULL_NEW_LISTINGS_PERIOD_SECONDS = 5L;
+    private static final long PULL_NEW_LISTINGS_PERIOD_SECONDS = 30L;
     private final Set<String> DEFAULT_TABLES = Set.of("daft", "myhome");
 
     private static final Set<String> tables = new HashSet<>();
@@ -54,9 +54,9 @@ public class Puller {
      */
     public static Map<String, List<PropertyMessage>> getQueryData(Query query) {
         Map<String, List<PropertyMessage>> queryData = new HashMap<>();
+        pullNewListings(query); // bulk up the results for testing
 
         for (String tableName : tables) {
-            pullNewDataFromSource(tableName, query); // bulk up the results for testing
             queryData.put(tableName, queryDatabase(tableName, query));
         }
 
@@ -73,6 +73,7 @@ public class Puller {
         System.out.println("Database size = " + databaseWrapper.getApproxTableSize("daft"));
         List<PropertyMessage> result;
         result = databaseWrapper.queryTable(tableName, query);
+        System.out.println("Results size = " + result.size());
         return result;
     }
 
@@ -91,7 +92,6 @@ public class Puller {
 
     private static void pullNewListings(Query query) {
         for (String tableName : tables) {
-            String latestEntryDate = getLatestDatabaseEntry(tableName);
             Map<String, PropertyMessage> newPropertyListings = pullNewDataFromSource(tableName, query);
             if (!newPropertyListings.isEmpty()) {
                 storeListings(tableName, newPropertyListings);

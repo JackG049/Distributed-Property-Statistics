@@ -24,7 +24,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 
-@RestController
+//@RestController
 public class MockPuller {
     private KafkaProducer queryPublisher;
     private static String DEFAULT_HOST = "kafka:9093";
@@ -42,7 +42,7 @@ public class MockPuller {
         queryPublisher = initQueryPublisher();
     }
 
-    @RequestMapping(value = "/query", method = RequestMethod.POST)
+    //@RequestMapping(value = "/query", method = RequestMethod.POST)
     public void query(@RequestBody RequestMessage request) {
         Query query = request.getQuery();
         PropertyMessage[] messages = new PropertyMessage[5];
