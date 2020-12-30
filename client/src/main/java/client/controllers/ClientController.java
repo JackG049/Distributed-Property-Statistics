@@ -71,6 +71,7 @@ public class ClientController {
                 Instant.EPOCH.toEpochMilli());
         HttpEntity<RequestMessage> request = new HttpEntity<>(requestMessage);
         startThread(resultsHandler);
+        
         restTemplate.postForObject("http://192.168.99.101:8081" + "/client", request, RequestMessage.class);
         
         int count = 0;
@@ -85,6 +86,8 @@ public class ClientController {
                 LOGGER.info("Results Found");
 
                 StatisticsResult[] results = resultsHandler.getResult(uuid);
+
+
 
                 for(StatisticsResult result : results) {
                     System.out.println(result.getStatistics().toString());
