@@ -21,14 +21,14 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 public class ResultsHandler implements Runnable {
-    private final Map<Pair<UUID, Integer>,StatisticsResult[]> map = new HashMap<>();
+    private final Map<Pair<UUID, String>,StatisticsResult[]> map = new ConcurrentHashMap<>();
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsHandler.class);
 
     private final MessageDeserializer deserializer;
@@ -60,17 +60,19 @@ public class ResultsHandler implements Runnable {
         try {
             while (true) {
                 LOGGER.debug("polling...");
-                final ConsumerRecords<UUID, String> records = consumer.poll(Duration.ofMillis(1000));
+                final ConsumerRecords<UUID, String> records = consumer.poll(Duration.ofMillis(500));
                 if (!records.isEmpty()) {
                     LOGGER.info("Records consumed from kafka");
                 }
                 for (ConsumerRecord<UUID, String> record : records) {
+                    System.out.println(records.count());
                     final Message<StatisticsResult[]> message = deserializer.deserialize(record.value());
                     final ResultsMessage resultsMessage = (ResultsMessage) message;
-                    final int partitionID = resultsMessage.getPartitionID();
+                    final String topic = resultsMessage.getSource();
+                    System.out.println(topic);
                     final StatisticsResult[] data =  resultsMessage.getData();
                     final UUID uuid = resultsMessage.getUuid();
-                    map.put(Pair.of(uuid, partitionID), data);
+                    map.put(Pair.of(uuid, topic), data);
                 }
                 try {
                     Thread.sleep(500);
@@ -85,10 +87,14 @@ public class ResultsHandler implements Runnable {
     }
 
     public boolean isEmpty(UUID uuid) {
-        return this.map.containsKey(Pair.of(uuid, partitionId)) ? false : true;
+        return this.map.containsKey(Pair.of(uuid, "requests_daft")) ? false : true;
     }
 
-    public StatisticsResult[] getResult(UUID uuid) {
-        return this.map.get(Pair.of(uuid,partitionId));
+    public StatisticsResult[] getResult(UUID uuid, String topic) {
+        if(topic.equals("daft")) {
+            return this.map.get(Pair.of(uuid,"requests_daft"));
+        } else {
+            return this.map.get(Pair.of(uuid,"requests_myhome"));
+        }
     }
 }

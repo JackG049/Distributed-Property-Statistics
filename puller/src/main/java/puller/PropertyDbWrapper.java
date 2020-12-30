@@ -126,14 +126,14 @@ public class PropertyDbWrapper {
 
         QuerySpec request = new QuerySpec()
                 .withKeyConditionExpression("#pk = :county and #sk between :start and :end")
-                .withFilterExpression("#type = :propertytype and #price between :min and :max")
-                .withNameMap(new NameMap().with("#pk", "County").with("#sk", "ListingDate")
-                        .with("#price", "Price").with("#type", "ListingType"))
+                .withFilterExpression("#type = :propertytype")// and #price between :min and :max")
+                .withNameMap(new NameMap().with("#pk", "County").with("#sk", "ListingDate").with("#type", "ListingType"))
+                        // .with("#price", "Price").with("#type", "ListingType"))
                 .withValueMap(new ValueMap()
                         .withString(":county", query.getCounty())
-                        .withNumber(":min", query.getMinPrice())
-                        .withNumber(":max", query.getMaxPrice())
-                        .withString(":propertytype", query.getPropertyType())
+                        // .withNumber(":min", query.getMinPrice())
+                        // .withNumber(":max", query.getMaxPrice())
+                         .withString(":propertytype", query.getPropertyType())
                         .withString(":start", query.getStartDate())
                         .withString(":end", query.getEndDate()));
 

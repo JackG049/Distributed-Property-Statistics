@@ -1,60 +1,87 @@
 <html>
   <head>
+    <link rel="stylesheet" href="css/common.css">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script th:inline="javascript">
       /*<![CDATA[*/
-      var cols = ['Year','Mean','Median','Variance','Stddev'];
-      var row = [];
+      var cols = ['Year','Mean','Median','Stddev'];
       var dates = /*[[${dates}]]*/ "";
-      var mean = /*[[${mean}]]*/ "";
-      var median = /*[[${median}]]*/ "";
-      var variance = /*[[${variance}]]*/ "";
-      var stddev = /*[[${stddev}]]*/ "";
-
       console.log(dates);
-      console.log(mean);
-      console.log(median);
-      console.log(variance);
-      console.log(stddev);
-
       google.charts.load('current', {'packages':['corechart']});
-      google.charts.setOnLoadCallback(drawChart);
+      google.charts.setOnLoadCallback(drawDaft);
+      google.charts.setOnLoadCallback(drawMyHome);
 
-      function drawChart() {
-
+      function drawDaft() {
         var data = new google.visualization.DataTable();
 
         data.addColumn('string',cols[0]);
         data.addColumn('number',cols[1]);
         data.addColumn('number',cols[2]);
         data.addColumn('number',cols[3]);
-        data.addColumn('number',cols[4]);
 
-        console.log(data);
-
-        for(i = 0;i<dates.length;i++) {
+        var dateCounter = 0;
+        /*[# th:each="partition : ${daftMap.keySet()}"]*/
+          var arrayCounter = 0;
+          var array = [];
+          /*[# th:each="value : ${daftMap.get(partition).entrySet()}"]*/
+            array.push(/*[[${value.getValue()}]]*/);
+          /*[/]*/
+          console.log(array);
           data.addRows([
-            [dates[i],mean[i],median[i],variance[i],stddev[i]]
+              [dates[dateCounter++],array[arrayCounter++],array[arrayCounter+=2],array[arrayCounter++]]
           ])
-        }
-
-        console.log(row);
-        data.addRows(row);
-
+        /*[/]*/
         console.log(data);
+
         var options = {
-          title: 'Housing Results',
+          title: 'Housing Results - Daft.ie',
           curveType: 'function',
           legend: { position: 'bottom' }
         };
-        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+        var chart = new google.visualization.LineChart(document.getElementById('Daft_Chart'));
+
+        chart.draw(data, options);
+      }
+
+      function drawMyHome() {
+        var data = new google.visualization.DataTable();
+
+        data.addColumn('string',cols[0]);
+        data.addColumn('number',cols[1]);
+        data.addColumn('number',cols[2]);
+        data.addColumn('number',cols[3]);
+
+        var dateCounter = 0;
+        /*[# th:each="partition : ${myhomeMap.keySet()}"]*/
+          var arrayCounter = 0;
+          var array = [];
+          /*[# th:each="value : ${myhomeMap.get(partition).entrySet()}"]*/
+            array.push(/*[[${value.getValue()}]]*/);
+          /*[/]*/
+          console.log(array);
+          data.addRows([
+              [dates[dateCounter++],array[arrayCounter++],array[arrayCounter+=2],array[arrayCounter++]]
+          ])
+        /*[/]*/
+        console.log(data);
+
+        var options = {
+          title: 'Housing Results - MyHome.ie',
+          curveType: 'function',
+          legend: { position: 'bottom' }
+        };
+        var chart = new google.visualization.LineChart(document.getElementById('MyHome_Chart'));
 
         chart.draw(data, options);
       }
       /*]]>*/
     </script>
   </head>
-  <body>
-    <div id="curve_chart" style="width: 900px; height: 500px"></div>
+  <body style="width: 1500px">
+    <div id="Daft_Chart" style="float: left;width: 700; height: 500px; border: 1px solid #ccc"></div>
+    <div id="MyHome_Chart" style="float: left;width: 700; height: 500px; border: 1px solid #ccc"></div>
+    <div>
+      <a href="/" class="myButton">Back</a>
+  </div>
   </body>
 </html>

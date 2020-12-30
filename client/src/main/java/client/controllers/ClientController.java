@@ -27,37 +27,45 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.web.bind.annotation.PostMapping;
-
+/**
+ * ClientController for client endpoints on port 8080
+ */
 @Controller
 public class ClientController {
 
-    private List<String> dates = new ArrayList<>();
-    private List<Double> median = new ArrayList<>();
-    private List<Double> variance = new ArrayList<>();
-    private List<Double> mean = new ArrayList<>();
-    private List<Double> stddev = new ArrayList<>();
+    private UUID uuid;
+    private static final Properties props;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientController.class);
     private static final MessageDeserializer deserializer = new MessageDeserializer(Util.objectMapper);
-    private UUID uuid;
-    private static final Properties props;
-    
+
     static {
         props = Util.loadPropertiesFromFile("consumer.properties");
         props.setProperty("group.id",  "results_client");
     }
-
     private final ResultsHandler resultsHandler = new ResultsHandler(props, deserializer);
+    private Thread consumerThread = new Thread(resultsHandler);
     private final int partitionId = resultsHandler.getPartitionId();
 
     @GetMapping("/")
     public String home(Model model) {
         model.addAttribute("Heading", "Home");
-        County counties = new County();
-        model.addAttribute("counties", counties.getCounties());
+        model.addAttribute("counties", County.getCounties());
         return "home.html";
     }
 
+    /**
+     * query endpoint that takes parameters from home.html and posts to balancer
+     * @param county
+     * @param type
+     * @param sDate
+     * @param eDate
+     * @param minPrice
+     * @param maxPrice
+     * @param model
+     * @return display.html
+     * @throws InterruptedException
+     */
     @PostMapping("/query")
     public String query(String county, String type, String sDate, String eDate, String minPrice, String maxPrice,
             Model model) throws InterruptedException {
@@ -65,52 +73,50 @@ public class ClientController {
         RestTemplate restTemplate = new RestTemplate();
         Query query = new Query(county, type, "000", sDate, eDate, Double.parseDouble(minPrice),
                 Double.parseDouble(maxPrice));
-        System.out.println(county + type + sDate + eDate + minPrice + maxPrice);
         uuid = UUID.randomUUID();
         RequestMessage requestMessage = new RequestMessage(uuid, partitionId, query,
                 Instant.EPOCH.toEpochMilli());
         HttpEntity<RequestMessage> request = new HttpEntity<>(requestMessage);
-        startThread(resultsHandler);
         restTemplate.postForObject("http://balancer:8081" + "/client", request, RequestMessage.class);
         
+        if(!consumerThread.isAlive())
+            startThread();
+
+        List<String> dates = new ArrayList<>();
+        Map<String, Map<String,Double>> myhomeMap = new HashMap<>();
+        Map<String, Map<String,Double>> daftMap = new HashMap<>();
+
         int count = 0;
         int lim = 2;
+        Thread.sleep(3000);
         while(count != lim) {
-
             if(resultsHandler.isEmpty(uuid)) {
-                System.out.println("empty");
-                Thread.sleep(200);
+                LOGGER.info("No Results Found ... Polling");
+                Thread.sleep(1500);
             }
             else {
-                System.out.println("not Empty");
-
-                StatisticsResult[] results = resultsHandler.getResult(uuid);
-
+                LOGGER.info("Results Found ... ");
+                StatisticsResult[] results = resultsHandler.getResult(uuid, "daft");
                 for(StatisticsResult result : results) {
-                    System.out.println(result.getStatistics().toString());
                     for(Partition partition : result.getStatistics().keySet()) {
-                        if(count == 0) {
                             dates.add(parsePartition(partition));
-                            Map<String,Double> temp = result.getStatistics().get(partition);
-                            mean.add(temp.get("mean"));
-                            median.add(temp.get("median"));
-                            variance.add(temp.get("variance"));
-                            stddev.add(temp.get("stddev"));
-                        } else { 
-                            //myhomeMap.put(parsePartition(partition), result.getStatistics().get(partition));
-                        }
+                            daftMap.put(parsePartition(partition), result.getStatistics().get(partition));
                     }
                 }
-                count++;
+                results = resultsHandler.getResult(uuid, "myhome");
+                for(StatisticsResult result : results) {
+                    for(Partition partition : result.getStatistics().keySet()) {
+                            myhomeMap.put(parsePartition(partition), result.getStatistics().get(partition));
+                    }
+                }
+                //Break loop if results are empty
+                count=lim;
             }
         }
 
         model.addAttribute("dates", dates);
-        model.addAttribute("mean", mean);
-        model.addAttribute("median", median);
-        model.addAttribute("variance", variance);
-        model.addAttribute("stddev", stddev);
-        
+        model.addAttribute("myhomeMap", myhomeMap);
+        model.addAttribute("daftMap", daftMap);
         return "display.html";
     }
 
@@ -124,9 +130,7 @@ public class ClientController {
         return result;
     }
 
-    private void startThread(ResultsHandler consumer) {
-        Thread consumerThread = new Thread(consumer);
-        LOGGER.info("Starting Consumer");
+    private void startThread() {
         consumerThread.start();
     }
 }

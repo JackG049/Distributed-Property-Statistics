@@ -11,6 +11,9 @@ import rest.UrlConstants;
 
 import java.util.LinkedList;
 
+/**
+ * BalancerService Distributes Requests via round robin
+ */
 @RestController
 public class BalancerService {
     private int offset = 0;
@@ -18,13 +21,12 @@ public class BalancerService {
 
     @PostMapping("/client")
     public void addGateway(@RequestBody RequestMessage message) {
-        System.out.println("\nMESSAGE RECEIVED!!!\n\n\n\n\n");
+        System.out.println("\nMESSAGE RECEIVED!!!\n");
         messageList.add(message);
         System.out.println(messageList.get(0).getPartitionID());
         loadBalancer(message);
     }
 
-    //Send requests in round robin
     private void loadBalancer(RequestMessage message) {
         RestTemplate restTemplate = new RestTemplate();
         HttpEntity<RequestMessage> request = new HttpEntity<>(message);
@@ -32,6 +34,6 @@ public class BalancerService {
     }
 
     private String brokerPort() {
-        return "http://puller:8082/query";// + (8082/query%UrlConstants.PullerInstances);
+        return "http://puller:" + (8082 + offset++%UrlConstants.PullerInstances) + "/query";
     }
 }
