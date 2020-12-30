@@ -59,6 +59,14 @@ public class MockDataSource {
 
         return propertyListings;
     }
+
+    /**
+     * Generate property listings within a specific date range
+     * @param dataSourceName e.g daft
+     * @param startDate of the listings
+     * @param endDate of the listings
+     * @return
+     */
     public Map<String, PropertyMessage> getPropertyListings(String dataSourceName, String startDate, String endDate ) {
         Map<String, PropertyMessage> propertyListings = new HashMap<>();
 
@@ -94,6 +102,13 @@ public class MockDataSource {
         return dates;
     }
 
+    /**
+     * Generate property data to fufill a specific query
+     * @param numberProperties to be generated
+     * @param query for data to be generated against
+     * @return sample data
+     * @throws IOException
+     */
     private static List<PropertyData> generatePropertyData(long numberProperties, Query query) throws IOException {
         final ObjectMapper objectMapper = Util.objectMapper;
         final InputStream inputStream = MockDataSource.class.getClassLoader().getResourceAsStream("counties.json");
@@ -125,6 +140,12 @@ public class MockDataSource {
         return dataList;
     }
 
+    /**
+     * Create sample property data for across the country
+     * @param numberProperties to create data for
+     * @return sample data
+     * @throws IOException
+     */
     private static List<PropertyData> generateGeneralPropertyData(long numberProperties) throws IOException {
         final ObjectMapper objectMapper = Util.objectMapper;
         final InputStream inputStream = MockDataSource.class.getClassLoader().getResourceAsStream("counties.json");

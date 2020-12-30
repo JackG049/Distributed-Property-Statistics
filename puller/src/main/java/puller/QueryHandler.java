@@ -29,9 +29,15 @@ import java.util.*;
 @RestController
 public class QueryHandler {
     private final KafkaProducer queryPublisher;
-    private static final Puller puller = new Puller();
+    private static Puller puller;
+    private static final String DEFAULT_DATABASE_ENDPOINT = "http://dynamodb:8000";
 
     public QueryHandler() {
+        this(DEFAULT_DATABASE_ENDPOINT);
+    }
+
+    public QueryHandler(String databaseEndpoint) {
+        puller = new Puller(databaseEndpoint);
         Properties props = Util.loadPropertiesFromFile("producer.properties");
         queryPublisher = new KafkaProducer(props);
     }

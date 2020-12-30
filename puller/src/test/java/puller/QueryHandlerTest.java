@@ -21,7 +21,7 @@ public class QueryHandlerTest {
     @Before
     public void init() {
         props = Util.loadPropertiesFromFile("producer.properties");
-        queryHandler = new QueryHandler();
+        queryHandler = new QueryHandler("http://localhost:8000");
     }
 
     @Test

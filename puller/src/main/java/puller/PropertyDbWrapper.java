@@ -28,12 +28,17 @@ import static util.DynamoDbUtil.propertyItemToPropertyMessage;
 public class PropertyDbWrapper {
     private AmazonDynamoDB client;
     private DynamoDB dynamoDB;
-    private final String DEFAULT_ORIGIN_DATE = "2020-12-10";
+    private final String DEFAULT_ORIGIN_DATE = "2020-12-01";
     private final int MAX_DYNAMO_BATCH_SIZE = 25;
+    private static final String DEFAULT_ENDPOINT = "http://dynamodb:8000";
 
     public PropertyDbWrapper() {
+        this(DEFAULT_ENDPOINT);
+    }
+
+    public PropertyDbWrapper(String endpoint) {
         this.client = AmazonDynamoDBClientBuilder.standard()
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://dynamodb:8000", "eu-west-2"))
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, "eu-west-2"))
                 .build();
         this.dynamoDB = new DynamoDB(client);
     }
@@ -144,37 +149,6 @@ public class PropertyDbWrapper {
         }
         return propertyMessages;
     }
-
-    public List<PropertyMessage> queryTableOld(String tableName, Query query) {
-        Table table = dynamoDB.getTable(tableName);
-        Index index = table.getIndex("ListingDateIndex");
-
-        QuerySpec request = new QuerySpec()
-                .withKeyConditionExpression("#pk = :county and #sk between :start and :end")
-                .withFilterExpression("#type = :propertytype and #price between :min and :max")
-                .withNameMap(new NameMap().with("#pk", "County").with("#sk", "ListingDate")
-                        .with("#price", "Price").with("#type", "PropertyType"))
-                .withValueMap(new ValueMap()
-                        .withString(":county", query.getCounty())
-                        .withString(":start", query.getStartDate())
-                        .withString(":end", query.getEndDate())
-                        .withString(":propertytype", query.getPropertyType())
-                        .withNumber(":min", query.getMinPrice())
-                        .withNumber(":max", query.getMaxPrice()));
-
-
-        ItemCollection<QueryOutcome> items = index.query(request);
-
-        List<PropertyMessage> propertyMessages = new ArrayList<>();
-        IteratorSupport<Item, QueryOutcome> dataIterator = items.iterator();
-        while (dataIterator.hasNext()) {
-            propertyMessages.add(
-                    propertyItemToPropertyMessage(dataIterator.next())
-            );
-        }
-        return propertyMessages;
-    }
-
 
     /**
      * Batch write property data to the database

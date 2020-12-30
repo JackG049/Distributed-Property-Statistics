@@ -24,25 +24,19 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 
-//@RestController
+/**
+ * This MockPuller is useful for testing, experimenting, and debugging without the use of DynamoDB
+ */
+
 public class MockPuller {
     private KafkaProducer queryPublisher;
     private static String DEFAULT_HOST = "kafka:9093";
 
-    @Value("${hostname}")
-    private String hostname;
 
     public MockPuller() {
-        System.out.println("Puller Created");
-        if (hostname != null)
-            System.out.println(hostname);
-        else
-            System.out.println("HOSTNAME is null");
-
         queryPublisher = initQueryPublisher();
     }
 
-    //@RequestMapping(value = "/query", method = RequestMethod.POST)
     public void query(@RequestBody RequestMessage request) {
         Query query = request.getQuery();
         PropertyMessage[] messages = new PropertyMessage[5];
@@ -89,12 +83,8 @@ public class MockPuller {
 
     private KafkaProducer initQueryPublisher() {
         Properties props = new Properties();
+        props.setProperty("bootstrap.servers", DEFAULT_HOST);
 
-        if (StringUtils.isEmpty(hostname)) {
-            props.setProperty("bootstrap.servers", DEFAULT_HOST);
-        } else {
-            props.setProperty("bootstrap.servers", hostname);
-        }
         props.setProperty("group.id", "test");
         props.setProperty("enable.auto.commit", "true");
         props.setProperty("auto.commit.interval.ms", "1000");

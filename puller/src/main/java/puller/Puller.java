@@ -19,15 +19,21 @@ import static util.DynamoDbUtil.propertyMessageToPropertyItem;
  */
 
 public class Puller {
-    private static final PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
+    private static PropertyDbWrapper databaseWrapper;
     private static final MockDataSource mockDataSource = new MockDataSource();
     private static final long PULL_NEW_LISTINGS_PERIOD_SECONDS = 30L;
+    private static final String DEFAULT_DATABASE_ENDPOINT = "http://dynamodb:8000";
     private final Set<String> DEFAULT_TABLES = Set.of("daft", "myhome");
 
     private static final Set<String> tables = new HashSet<>();
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public Puller() {
+        this(DEFAULT_DATABASE_ENDPOINT);
+    }
+
+    public Puller(String databaseEndpoint) {
+        databaseWrapper = new PropertyDbWrapper(databaseEndpoint);
         // Create the default tables if they don't already exist
         tables.addAll(databaseWrapper.getTableNames());
         Set<String> absentTables = Sets.difference(DEFAULT_TABLES, tables);

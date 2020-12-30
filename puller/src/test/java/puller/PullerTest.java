@@ -18,17 +18,16 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 import java.util.*;
 
-
 @Ignore
 public class PullerTest {
     private static Puller puller;
     private static String DEFAULT_TABLE_NAME = "daft";
-    private static PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
+    private static PropertyDbWrapper databaseWrapper = new PropertyDbWrapper("http://localhost:8000");
     private static final long DEFAULT_NUM_ENTRIES = 5;
 
     @BeforeClass
     public static void setup() {
-        puller = new Puller();
+        puller = new Puller("http://localhost:8000");
 
         for (int i = 0; i < DEFAULT_NUM_ENTRIES; i++) {
             final Map<String, Object> infoMap = new HashMap<String, Object>();
