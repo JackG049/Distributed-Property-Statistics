@@ -26,6 +26,9 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * ResultsHandler handles the KafkaConsumer and polls any results from the Kafka network
+ */
 @Getter
 public class ResultsHandler implements Runnable {
     private final Map<Pair<UUID, String>,StatisticsResult[]> map = new ConcurrentHashMap<>();

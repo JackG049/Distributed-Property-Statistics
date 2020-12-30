@@ -87,9 +87,9 @@ public class ClientController {
         Map<String, Map<String,Double>> daftMap = new HashMap<>();
 
         int count = 0;
-        int lim = 2;
+        int dataStreams = 2;
         Thread.sleep(3000);
-        while(count != lim) {
+        while(count != dataStreams) {
             if(resultsHandler.isEmpty(uuid)) {
                 LOGGER.info("No Results Found ... Polling");
                 Thread.sleep(1500);
@@ -110,7 +110,7 @@ public class ClientController {
                     }
                 }
                 //Break loop if results are empty
-                count=lim;
+                count=dataStreams;
             }
         }
 
