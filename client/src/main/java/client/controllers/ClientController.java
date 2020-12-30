@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.web.bind.annotation.PostMapping;
 /**
- * ClientController for client endpoints on port 8080
+ * ClientController handles endpoints for the user on port 8080
  */
 @Controller
 public class ClientController {
@@ -55,7 +55,7 @@ public class ClientController {
     }
 
     /**
-     * query endpoint that takes parameters from home.html and posts to balancer
+     * Query endpoint that takes parameters from home.html and posts a requestMessage to load balancer
      * @param county
      * @param type
      * @param sDate
