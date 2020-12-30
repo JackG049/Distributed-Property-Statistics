@@ -21,7 +21,7 @@ public class BalancerService {
     private int offset = 0;
 
     @PostMapping("/client")
-    public void addGateway(@RequestBody RequestMessage message) {
+    public void distribute(@RequestBody RequestMessage message) {
         LOGGER.info("Message Recieved...");
         loadBalancer(message);
     }
@@ -32,7 +32,6 @@ public class BalancerService {
         String brokerport = brokerPort();
         restTemplate.postForObject(brokerport, request, RequestMessage.class);
         LOGGER.info("Message Sent to " + brokerport);
-
     }
 
     private String brokerPort() {
