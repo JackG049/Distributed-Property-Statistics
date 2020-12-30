@@ -2,6 +2,7 @@ version: '3'
 services:
   puller_alpha:
     image: puller:latest
+    container_name: puller
     networks:
       - distributed-property-statistics_kafka_network
     environment:

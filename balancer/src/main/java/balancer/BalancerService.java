@@ -18,6 +18,7 @@ public class BalancerService {
 
     @PostMapping("/client")
     public void addGateway(@RequestBody RequestMessage message) {
+        System.out.println("\nMESSAGE RECEIVED!!!\n\n\n\n\n");
         messageList.add(message);
         System.out.println(messageList.get(0).getPartitionID());
         loadBalancer(message);
@@ -31,6 +32,6 @@ public class BalancerService {
     }
 
     private String brokerPort() {
-        return "http://localhost:8082/query";// + (8082/query%UrlConstants.PullerInstances);
+        return "http://puller:8082/query";// + (8082/query%UrlConstants.PullerInstances);
     }
 }

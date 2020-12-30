@@ -1,6 +1,12 @@
 version: '3'
 services:
-  balancer_alpha:
+  balancer:
     image: balancer:latest
+    container_name: balancer
     ports:
       - '8081:8081'
+    networks:
+      - distributed-property-statistics_kafka_network
+networks:
+  distributed-property-statistics_kafka_network:
+    external: true

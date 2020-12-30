@@ -71,7 +71,7 @@ public class ClientController {
                 Instant.EPOCH.toEpochMilli());
         HttpEntity<RequestMessage> request = new HttpEntity<>(requestMessage);
         startThread(resultsHandler);
-        restTemplate.postForObject("http://localhost:8081" + "/client", request, RequestMessage.class);
+        restTemplate.postForObject("http://balancer:8081" + "/client", request, RequestMessage.class);
         
         int count = 0;
         int lim = 2;
@@ -100,8 +100,8 @@ public class ClientController {
                             //myhomeMap.put(parsePartition(partition), result.getStatistics().get(partition));
                         }
                     }
-                    count++;
                 }
+                count++;
             }
         }
 
