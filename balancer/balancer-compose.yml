@@ -1,14 +1,12 @@
-version: '3.3'
-
+version: '3'
 services:
-  dynamodb:
-    image: amazon/dynamodb-local:latest
-    container_name: dynamodb
+  balancer:
+    image: balancer:latest
+    container_name: balancer
     ports:
-     - "8000:8000"
+      - '8081:8081'
     networks:
       - distributed-property-statistics_kafka_network
 networks:
   distributed-property-statistics_kafka_network:
     external: true
-

@@ -29,8 +29,15 @@ import java.util.*;
 @RestController
 public class QueryHandler {
     private final KafkaProducer queryPublisher;
+    private static Puller puller;
+    private static final String DEFAULT_DATABASE_ENDPOINT = "http://dynamodb:8000";
 
     public QueryHandler() {
+        this(DEFAULT_DATABASE_ENDPOINT);
+    }
+
+    public QueryHandler(String databaseEndpoint) {
+        puller = new Puller(databaseEndpoint);
         Properties props = Util.loadPropertiesFromFile("producer.properties");
         queryPublisher = new KafkaProducer(props);
     }
@@ -41,10 +48,15 @@ public class QueryHandler {
      * @return
      */
     @RequestMapping(value = "/query", method = RequestMethod.POST)
-    public ResponseEntity<String> query(@RequestBody RequestMessage request) {
+    public void query(@RequestBody RequestMessage request) {
+        System.out.println("Message Received");
         // Get data needed to fulfill the query
         Query query = request.getQuery();
-        Map<String, List<PropertyMessage>> tableNameToPropertyMessageMap = Puller.getQueryData(query);
+
+        System.out.println("Getting data");
+        Map<String, List<PropertyMessage>> tableNameToPropertyMessageMap = puller.getQueryData(query);
+        //Map<String, List<PropertyMessage>> tableNameToPropertyMessageMap = mockData(query);
+        System.out.println("Data received. Size = " + tableNameToPropertyMessageMap.size());
 
         // Package and send each query and its relevant data
         for (Map.Entry<String, List<PropertyMessage>> propertyMessages : tableNameToPropertyMessageMap.entrySet()) {
@@ -52,14 +64,25 @@ public class QueryHandler {
                     request.getQuery(), propertyMessages.getValue().toArray(new PropertyMessage[0]));
 
             try {
+                System.out.println("Sending data");
                 sendPropertyData("requests_" + propertyMessages.getKey(), batchMessage);
+                System.out.println("Data sent");
             } catch (JsonProcessingException e) {
                 System.err.println("Failed to publish request");
                 e.printStackTrace();
             }
         }
+    }
 
-        return new ResponseEntity<>("Query Acknowledged.", HttpStatus.OK);
+    Map<String, List<PropertyMessage>> mockData(Query query) {
+        MockDataSource mockDataSource = new MockDataSource();
+        Map<String, PropertyMessage> data = mockDataSource.getPropertyListings("daft", query);
+        System.out.println("Mock data size" + data.keySet().size());
+
+        Map<String, List<PropertyMessage>> result = new HashMap<>();
+        result.put("daft", new ArrayList<PropertyMessage>(data.values()));
+        result.put("myhome", new ArrayList<PropertyMessage>(data.values()));
+        return result;
     }
 
     /**

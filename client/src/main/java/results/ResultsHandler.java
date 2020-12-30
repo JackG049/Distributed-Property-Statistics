@@ -21,18 +21,21 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * ResultsHandler handles the KafkaConsumer and polls any results from the Kafka network
+ */
 @Getter
 public class ResultsHandler implements Runnable {
-    private final Map<Pair<UUID, Integer>,StatisticsResult[]> map = new HashMap<>();
+    private final Map<Pair<UUID, String>,StatisticsResult[]> map = new ConcurrentHashMap<>();
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsHandler.class);
 
     private final MessageDeserializer deserializer;
-    private final Consumer<String, String> consumer;
+    private final Consumer<UUID, String> consumer;
     private int partitionId;
 
     public ResultsHandler(final Properties consumerProperties, final MessageDeserializer deserializer) {
@@ -59,16 +62,20 @@ public class ResultsHandler implements Runnable {
     public void run() {
         try {
             while (true) {
-                final ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
+                LOGGER.debug("polling...");
+                final ConsumerRecords<UUID, String> records = consumer.poll(Duration.ofMillis(500));
                 if (!records.isEmpty()) {
                     LOGGER.info("Records consumed from kafka");
                 }
-                for (ConsumerRecord<String, String> record : records) {
+                for (ConsumerRecord<UUID, String> record : records) {
+                    System.out.println(records.count());
                     final Message<StatisticsResult[]> message = deserializer.deserialize(record.value());
-                    final int partitionID = ((ResultsMessage) message).getPartitionID();
-                    final StatisticsResult[] data =  ((ResultsMessage) message).getData();
-                    final UUID uuid = ((ResultsMessage) message).getUuid();
-                    map.put(Pair.of(uuid, partitionID), data);
+                    final ResultsMessage resultsMessage = (ResultsMessage) message;
+                    final String topic = resultsMessage.getSource();
+                    System.out.println(topic);
+                    final StatisticsResult[] data =  resultsMessage.getData();
+                    final UUID uuid = resultsMessage.getUuid();
+                    map.put(Pair.of(uuid, topic), data);
                 }
                 try {
                     Thread.sleep(500);
@@ -83,10 +90,14 @@ public class ResultsHandler implements Runnable {
     }
 
     public boolean isEmpty(UUID uuid) {
-        return this.map.containsKey(Pair.of(uuid, partitionId)) ? false : true;
+        return this.map.containsKey(Pair.of(uuid, "requests_daft")) ? false : true;
     }
 
-    public StatisticsResult[] getResult(UUID uuid) {
-        return this.map.get(Pair.of(uuid,partitionId));
+    public StatisticsResult[] getResult(UUID uuid, String topic) {
+        if(topic.equals("daft")) {
+            return this.map.get(Pair.of(uuid,"requests_daft"));
+        } else {
+            return this.map.get(Pair.of(uuid,"requests_myhome"));
+        }
     }
 }

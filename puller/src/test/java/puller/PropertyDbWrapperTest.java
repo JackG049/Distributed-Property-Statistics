@@ -15,8 +15,9 @@ import java.util.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class PropertyDbWrapperTest {
-    private final static PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
+    private final static PropertyDbWrapper databaseWrapper = new PropertyDbWrapper("http://localhost:8000");
     private static String DEFAULT_TABLE_NAME = "daft";
     private static Set<String> tables = Set.of(DEFAULT_TABLE_NAME);
 
@@ -28,6 +29,7 @@ public class PropertyDbWrapperTest {
             final Map<String, Object> infoMap = new HashMap<String, Object>();
             infoMap.put("Price", Math.random() * 1500);
             infoMap.put("County", "Galway");
+            infoMap.put("ListingType", "apartment");
 
             databaseWrapper.writeData(DEFAULT_TABLE_NAME, "Daft_" + i, "2020-12-0" + (i + 1), infoMap);
         }
@@ -35,7 +37,7 @@ public class PropertyDbWrapperTest {
         final Map<String, Object> infoMap = new HashMap<String, Object>();
         infoMap.put("Price", 2000);
         infoMap.put("County", "Galway");
-        infoMap.put("PropertyType", "house");
+        infoMap.put("ListingType", "house");
         databaseWrapper.writeData(DEFAULT_TABLE_NAME, "Daft_" + 4, "2020-12-0" + 5, infoMap);
     }
 
@@ -51,9 +53,9 @@ public class PropertyDbWrapperTest {
     }
 
     @Test
-    public void priceQueryTableTest() {
+    public void priceQueryTableTest() throws InterruptedException {
         Query query = new Query("Galway", "house", "000",
-                "2020-12-01", "2020-12-25", 2000.0, 2000.0);
+                "2020-12-01", "2020-12-25", 1900.0, 2500.0);
         List<PropertyMessage> items = databaseWrapper.queryTable(DEFAULT_TABLE_NAME, query);
         assertEquals(1, items.size());
 

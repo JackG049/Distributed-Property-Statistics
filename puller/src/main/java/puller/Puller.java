@@ -19,15 +19,21 @@ import static util.DynamoDbUtil.propertyMessageToPropertyItem;
  */
 
 public class Puller {
-    private static final PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
+    private static PropertyDbWrapper databaseWrapper;
     private static final MockDataSource mockDataSource = new MockDataSource();
-    private static final long PULL_NEW_LISTINGS_PERIOD_SECONDS = 5L;
+    private static final long PULL_NEW_LISTINGS_PERIOD_SECONDS = 30L;
+    private static final String DEFAULT_DATABASE_ENDPOINT = "http://dynamodb:8000";
     private final Set<String> DEFAULT_TABLES = Set.of("daft", "myhome");
 
     private static final Set<String> tables = new HashSet<>();
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public Puller() {
+        this(DEFAULT_DATABASE_ENDPOINT);
+    }
+
+    public Puller(String databaseEndpoint) {
+        databaseWrapper = new PropertyDbWrapper(databaseEndpoint);
         // Create the default tables if they don't already exist
         tables.addAll(databaseWrapper.getTableNames());
         Set<String> absentTables = Sets.difference(DEFAULT_TABLES, tables);
@@ -54,6 +60,7 @@ public class Puller {
      */
     public static Map<String, List<PropertyMessage>> getQueryData(Query query) {
         Map<String, List<PropertyMessage>> queryData = new HashMap<>();
+        pullNewListings(query); // bulk up the results for testing
 
         for (String tableName : tables) {
             queryData.put(tableName, queryDatabase(tableName, query));
@@ -69,8 +76,10 @@ public class Puller {
      * @return relevant property data from the provided table
      */
     private static List<PropertyMessage> queryDatabase(String tableName, Query query) {
+        System.out.println("Database size = " + databaseWrapper.getApproxTableSize("daft"));
         List<PropertyMessage> result;
         result = databaseWrapper.queryTable(tableName, query);
+        System.out.println("Results size = " + result.size());
         return result;
     }
 
@@ -81,6 +90,15 @@ public class Puller {
         for (String tableName : tables) {
             String latestEntryDate = getLatestDatabaseEntry(tableName);
             Map<String, PropertyMessage> newPropertyListings = pullNewDataFromSource(tableName, latestEntryDate);
+            if (!newPropertyListings.isEmpty()) {
+                storeListings(tableName, newPropertyListings);
+            }
+        }
+    }
+
+    private static void pullNewListings(Query query) {
+        for (String tableName : tables) {
+            Map<String, PropertyMessage> newPropertyListings = pullNewDataFromSource(tableName, query);
             if (!newPropertyListings.isEmpty()) {
                 storeListings(tableName, newPropertyListings);
             }
@@ -102,6 +120,10 @@ public class Puller {
      */
     private static Map<String, PropertyMessage> pullNewDataFromSource(String tableName, String latestEntryDate) {
         return mockDataSource.getPropertyListings(tableName, latestEntryDate, LocalDate.now().toString());
+    }
+
+    private static Map<String, PropertyMessage> pullNewDataFromSource(String tableName, Query query) {
+        return mockDataSource.getPropertyListings(tableName, query);
     }
 
     /**

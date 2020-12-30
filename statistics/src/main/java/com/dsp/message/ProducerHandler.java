@@ -1,5 +1,6 @@
 package com.dsp.message;
 
+import com.dsp.service.Statistics;
 import com.google.common.base.Preconditions;
 import kafka.KafkaConstants;
 import message.MessageSerializer;
@@ -52,7 +53,7 @@ public class ProducerHandler extends KafkaHandler {
                         for (final Map.Entry<Pair<UUID, Integer>, StatisticsResult[]> result : getResults().entrySet()) {
                             final UUID uuid = result.getKey().getKey();
                             final int partitionId = result.getKey().getValue();
-                            final ResultsMessage message = new ResultsMessage(uuid, partitionId, System.currentTimeMillis(), result.getValue());
+                            final ResultsMessage message = new ResultsMessage(uuid, partitionId, Statistics.TOPIC, System.currentTimeMillis(), result.getValue());
                             final ProducerRecord<UUID, String> record =
                                     new ProducerRecord<>(KafkaConstants.RESULTS, partitionId, uuid, serializer.serialize(message));
                             LOGGER.debug("partitionID: " + partitionId);

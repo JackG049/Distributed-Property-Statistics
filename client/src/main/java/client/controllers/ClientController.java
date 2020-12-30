@@ -1,15 +1,12 @@
 package client.controllers;
 
 import java.time.Instant;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-
-import com.mysql.cj.x.protobuf.MysqlxDatatypes.Array;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Controller;
@@ -23,87 +20,117 @@ import message.RequestMessage;
 import model.Query;
 import model.StatisticsResult;
 import partitioning.Partition;
-import rest.UrlConstants;
 import results.ResultsHandler;
 import util.Util;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.web.bind.annotation.PostMapping;
-
+/**
+ * ClientController for client endpoints on port 8080
+ */
 @Controller
 public class ClientController {
 
-    private Map<String, Map<String, Double>> daftMap = new HashMap<>();
-    private Map<String, Map<String, Double>> myhomeMap = new HashMap<>();
+    private UUID uuid;
+    private static final Properties props;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientController.class);
     private static final MessageDeserializer deserializer = new MessageDeserializer(Util.objectMapper);
-    private UUID uuid;
-    private static final Properties props;
-    private ArrayList<String> dates = new ArrayList<>();
-    
+
     static {
         props = Util.loadPropertiesFromFile("consumer.properties");
         props.setProperty("group.id",  "results_client");
     }
-
     private final ResultsHandler resultsHandler = new ResultsHandler(props, deserializer);
+    private Thread consumerThread = new Thread(resultsHandler);
     private final int partitionId = resultsHandler.getPartitionId();
-
 
     @GetMapping("/")
     public String home(Model model) {
         model.addAttribute("Heading", "Home");
-        County counties = new County();
-        model.addAttribute("counties", counties.getCounties());
+        model.addAttribute("counties", County.getCounties());
         return "home.html";
     }
 
+    /**
+     * query endpoint that takes parameters from home.html and posts to balancer
+     * @param county
+     * @param type
+     * @param sDate
+     * @param eDate
+     * @param minPrice
+     * @param maxPrice
+     * @param model
+     * @return display.html
+     * @throws InterruptedException
+     */
     @PostMapping("/query")
     public String query(String county, String type, String sDate, String eDate, String minPrice, String maxPrice,
             Model model) throws InterruptedException {
         model.addAttribute("Heading", "Home");
         RestTemplate restTemplate = new RestTemplate();
-        Query query = new Query(county, type, "test", sDate, eDate, Double.parseDouble(minPrice),
+        Query query = new Query(county, type, "000", sDate, eDate, Double.parseDouble(minPrice),
                 Double.parseDouble(maxPrice));
         uuid = UUID.randomUUID();
         RequestMessage requestMessage = new RequestMessage(uuid, partitionId, query,
                 Instant.EPOCH.toEpochMilli());
         HttpEntity<RequestMessage> request = new HttpEntity<>(requestMessage);
-        restTemplate.postForObject(UrlConstants.BALANCER + "/client", request, RequestMessage.class);
+        restTemplate.postForObject("http://balancer:8081" + "/client", request, RequestMessage.class);
         
-        daftMap.clear();
-        myhomeMap.clear();
+        if(!consumerThread.isAlive())
+            startThread();
+
+        List<String> dates = new ArrayList<>();
+        Map<String, Map<String,Double>> myhomeMap = new HashMap<>();
+        Map<String, Map<String,Double>> daftMap = new HashMap<>();
 
         int count = 0;
-        int lim = 2;
-        while(count != lim) {
-
-            if(resultsHandler.isEmpty(uuid))
-                Thread.sleep(200);
+        int dataStreams = 2;
+        Thread.sleep(3000);
+        while(count != dataStreams) {
+            if(resultsHandler.isEmpty(uuid)) {
+                LOGGER.info("No Results Found ... Polling");
+                Thread.sleep(1500);
+            }
             else {
-                StatisticsResult[] results = resultsHandler.getResult(uuid);
-
+                LOGGER.info("Results Found ... ");
+                StatisticsResult[] results = resultsHandler.getResult(uuid, "daft");
                 for(StatisticsResult result : results) {
                     for(Partition partition : result.getStatistics().keySet()) {
-                        if(count == 0)
+                            dates.add(parsePartition(partition));
                             daftMap.put(parsePartition(partition), result.getStatistics().get(partition));
-                        else 
+                    }
+                }
+                results = resultsHandler.getResult(uuid, "myhome");
+                for(StatisticsResult result : results) {
+                    for(Partition partition : result.getStatistics().keySet()) {
                             myhomeMap.put(parsePartition(partition), result.getStatistics().get(partition));
                     }
-                    count++;
                 }
+                //Break loop if results are empty
+                count=dataStreams;
             }
         }
+
+        model.addAttribute("dates", dates);
+        model.addAttribute("myhomeMap", myhomeMap);
+        model.addAttribute("daftMap", daftMap);
         return "display.html";
     }
 
+    /**
+     * Return 
+     */
     private String parsePartition(Partition partition) {
-        String res = partition.getValue();
-        res = res.split("_")[1];
-        return res;
+        String result = partition.getValue();
+        int datePosition = result.lastIndexOf("_")-5;
+        result = result.substring(datePosition+1).replaceAll("_", "-");
+        return result;
+    }
+
+    private void startThread() {
+        consumerThread.start();
     }
 }

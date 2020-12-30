@@ -3,30 +3,26 @@ import static org.junit.Assert.assertNotNull;
 import java.util.Properties;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import message.MessageDeserializer;
 import results.ResultsHandler;
 import util.Util;
 
-public class ClientTest {
-
+public class ResultsHandlerTest {
+    private ResultsHandler resultsHandler;
     private Properties props;
     private MessageDeserializer deserializer;
 
-    @Ignore
     @Before
     public void init() {
-        props = Util.loadPropertiesFromFile("consumertest.properties");
-        props.setProperty("group.id",  "results_client");
         deserializer = new MessageDeserializer(Util.objectMapper);
+        props = Util.loadPropertiesFromFile("consumertest.properties");
+        resultsHandler = new ResultsHandler(props,deserializer);
     }
 
-    @Ignore
     @Test
-    public void testKafkaConnection() {
-        ResultsHandler resultsHandler = new ResultsHandler(props, deserializer);
+    public void checkNotNull() {
         assertNotNull(resultsHandler);
-    }
+    } 
 }
