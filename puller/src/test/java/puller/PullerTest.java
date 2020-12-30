@@ -5,6 +5,7 @@ import message.PropertyMessage;
 import model.Query;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
