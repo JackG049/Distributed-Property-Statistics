@@ -27,7 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * ResultsHandler handles the KafkaConsumer and polls any results from the Kafka network
+ * ResultsHandler handles the KafkaConsumer and polls for any results from the Kafka network
  */
 @Getter
 public class ResultsHandler implements Runnable {
@@ -89,10 +89,21 @@ public class ResultsHandler implements Runnable {
         }
     }
 
+    /**
+     * Check if a map contains the correct pair of data
+     * @param uuid
+     * @return
+     */
     public boolean isEmpty(UUID uuid) {
         return this.map.containsKey(Pair.of(uuid, "requests_daft")) ? false : true;
     }
 
+    /**
+     * Return Statistics results seperated by topic
+     * @param uuid
+     * @param topic
+     * @return
+     */
     public StatisticsResult[] getResult(UUID uuid, String topic) {
         if(topic.equals("daft")) {
             return this.map.get(Pair.of(uuid,"requests_daft"));
