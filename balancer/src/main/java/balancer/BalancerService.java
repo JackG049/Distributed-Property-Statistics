@@ -20,7 +20,6 @@ public class BalancerService {
     private LinkedList<RequestMessage> messageList = new LinkedList<RequestMessage>();
     private static final Logger LOGGER = LoggerFactory.getLogger(BalancerService.class);
 
-
     @PostMapping("/client")
     public void addGateway(@RequestBody RequestMessage message) {
         messageList.add(message);

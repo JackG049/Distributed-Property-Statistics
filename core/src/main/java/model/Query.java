@@ -20,7 +20,6 @@ public class Query {
     private final String county;
     private final String propertyType;
     private final String postcodePrefix;
-    // Using the wrapper version so they can be set to null
     private final String startDate;
     private final String endDate;
     private final Double minPrice;

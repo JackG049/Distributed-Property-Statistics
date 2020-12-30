@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @Controller
 public class ClientController {
@@ -53,11 +54,22 @@ public class ClientController {
     @GetMapping("/")
     public String home(Model model) {
         model.addAttribute("Heading", "Home");
-        County counties = new County();
-        model.addAttribute("counties", counties.getCounties());
+        model.addAttribute("counties", County.getCounties());
         return "home.html";
     }
 
+    /**
+     * Accepts Post form from Webpage and posts to Balancer to be distributed
+     * @param county 
+     * @param type
+     * @param sDate
+     * @param eDate
+     * @param minPrice
+     * @param maxPrice
+     * @param model
+     * @return
+     * @throws InterruptedException
+     */
     @PostMapping("/query")
     public String query(String county, String type, String sDate, String eDate, String minPrice, String maxPrice,
             Model model) throws InterruptedException {
@@ -71,7 +83,7 @@ public class ClientController {
                 Instant.EPOCH.toEpochMilli());
         HttpEntity<RequestMessage> request = new HttpEntity<>(requestMessage);
         startThread(resultsHandler);
-        
+
         restTemplate.postForObject("http://192.168.99.101:8081" + "/client", request, RequestMessage.class);
         
         int count = 0;
@@ -84,11 +96,7 @@ public class ClientController {
             }
             else {
                 LOGGER.info("Results Found");
-
                 StatisticsResult[] results = resultsHandler.getResult(uuid);
-
-
-
                 for(StatisticsResult result : results) {
                     System.out.println(result.getStatistics().toString());
                     for(Partition partition : result.getStatistics().keySet()) {
@@ -99,11 +107,12 @@ public class ClientController {
                             median.add(temp.get("median"));
                             variance.add(temp.get("variance"));
                             stddev.add(temp.get("stddev"));
-                        } else { 
+                        } else {
                             //myhomeMap.put(parsePartition(partition), result.getStatistics().get(partition));
                         }
+                        count++;
                     }
-                    count++;
+
                 }
             }
         }
@@ -117,9 +126,6 @@ public class ClientController {
         return "display.html";
     }
 
-    /**
-     * Return 
-     */
     private String parsePartition(Partition partition) {
         String result = partition.getValue();
         int datePosition = result.lastIndexOf("_")-5;

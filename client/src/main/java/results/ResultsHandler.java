@@ -35,6 +35,11 @@ public class ResultsHandler implements Runnable {
     private final Consumer<UUID, String> consumer;
     private int partitionId;
 
+    /**
+     * Create new Kafka consumer subscribed to topic "Results"
+     * @param consumerProperties
+     * @param deserializer
+     */
     public ResultsHandler(final Properties consumerProperties, final MessageDeserializer deserializer) {
         this.consumer = new KafkaConsumer<>(consumerProperties);
         this.deserializer = Preconditions.checkNotNull(deserializer, "serializer must not be null");
