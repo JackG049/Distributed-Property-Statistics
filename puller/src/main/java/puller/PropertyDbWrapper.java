@@ -28,12 +28,12 @@ import static util.DynamoDbUtil.propertyItemToPropertyMessage;
 public class PropertyDbWrapper {
     private AmazonDynamoDB client;
     private DynamoDB dynamoDB;
-    private final String DEFAULT_ORIGIN_DATE = "2020-01-01";
+    private final String DEFAULT_ORIGIN_DATE = "2020-12-25";
     private final int MAX_DYNAMO_BATCH_SIZE = 25;
 
     public PropertyDbWrapper() {
         this.client = AmazonDynamoDBClientBuilder.standard()
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://192.168.99.101:8000", "eu-west-2"))
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://dynamodb:8000", "eu-west-2"))
                 .build();
         this.dynamoDB = new DynamoDB(client);
     }

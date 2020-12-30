@@ -19,6 +19,7 @@ import static org.junit.Assume.assumeTrue;
 import java.util.*;
 
 
+@Ignore
 public class PullerTest {
     private static Puller puller;
     private static String DEFAULT_TABLE_NAME = "daft";

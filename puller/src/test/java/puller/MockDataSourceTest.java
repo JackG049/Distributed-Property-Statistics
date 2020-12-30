@@ -2,6 +2,7 @@ package puller;
 
 import message.PropertyMessage;
 import org.junit.AfterClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.time.LocalDate;
@@ -10,6 +11,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class MockDataSourceTest {
     private MockDataSource mockDataSource = new MockDataSource();
     private static String DEFAULT_TABLE_NAME = "daft";

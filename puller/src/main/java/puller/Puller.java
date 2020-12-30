@@ -56,6 +56,7 @@ public class Puller {
         Map<String, List<PropertyMessage>> queryData = new HashMap<>();
 
         for (String tableName : tables) {
+            pullNewDataFromSource(tableName, query); // bulk up the results for testing
             queryData.put(tableName, queryDatabase(tableName, query));
         }
 
@@ -69,6 +70,7 @@ public class Puller {
      * @return relevant property data from the provided table
      */
     private static List<PropertyMessage> queryDatabase(String tableName, Query query) {
+        System.out.println("Database size = " + databaseWrapper.getApproxTableSize("daft"));
         List<PropertyMessage> result;
         result = databaseWrapper.queryTable(tableName, query);
         return result;
@@ -81,6 +83,16 @@ public class Puller {
         for (String tableName : tables) {
             String latestEntryDate = getLatestDatabaseEntry(tableName);
             Map<String, PropertyMessage> newPropertyListings = pullNewDataFromSource(tableName, latestEntryDate);
+            if (!newPropertyListings.isEmpty()) {
+                storeListings(tableName, newPropertyListings);
+            }
+        }
+    }
+
+    private static void pullNewListings(Query query) {
+        for (String tableName : tables) {
+            String latestEntryDate = getLatestDatabaseEntry(tableName);
+            Map<String, PropertyMessage> newPropertyListings = pullNewDataFromSource(tableName, query);
             if (!newPropertyListings.isEmpty()) {
                 storeListings(tableName, newPropertyListings);
             }
@@ -102,6 +114,10 @@ public class Puller {
      */
     private static Map<String, PropertyMessage> pullNewDataFromSource(String tableName, String latestEntryDate) {
         return mockDataSource.getPropertyListings(tableName, latestEntryDate, LocalDate.now().toString());
+    }
+
+    private static Map<String, PropertyMessage> pullNewDataFromSource(String tableName, Query query) {
+        return mockDataSource.getPropertyListings(tableName, query);
     }
 
     /**

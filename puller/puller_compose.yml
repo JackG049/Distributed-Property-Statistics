@@ -6,6 +6,8 @@ services:
       - distributed-property-statistics_kafka_network
     environment:
       KAFKA_HOST: "kafka:9093"
+      AWS_ACCESS_KEY_ID: 'DUMMYIDEXAMPLE'
+      AWS_SECRET_ACCESS_KEY: 'DUMMYEXAMPLEKEY'
     ports:
       - '8082:8082'
 networks:

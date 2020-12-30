@@ -7,6 +7,7 @@ import message.PropertyMessage;
 import model.Query;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.*;
@@ -14,6 +15,7 @@ import java.util.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class PropertyDbWrapperTest {
     private final static PropertyDbWrapper databaseWrapper = new PropertyDbWrapper();
     private static String DEFAULT_TABLE_NAME = "daft";
@@ -75,6 +77,7 @@ public class PropertyDbWrapperTest {
         assertEquals(2, result.size());
     }
 
+    @Ignore
     @Test
     public void getLastWriteTest() {
         String date = databaseWrapper.getLastWriteDate(DEFAULT_TABLE_NAME);
