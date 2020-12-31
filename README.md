@@ -1,10 +1,13 @@
 # Distributed Property Statistics
 
-Computes Irish property statistics in a distributed manner
+Computes Irish property statistics in a distributed manner. A video 
+demonstration of the system is included in this directory as dps-video-demo.mp4. A report detailing the most important aspects of this project is included in this directory as Distributed\_Property\_Statistics.pdf.
+
 
 ## Installation
 **Prerequisites**
 - Java 11
+- Maven
 - Docker 
 - docker-compose
 - patience :)
